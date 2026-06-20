@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Laravel\Socialite\Facades\Socialite;
@@ -50,6 +51,14 @@ class AuthController extends Controller
         $user = User::where($field, $login)->first();
 
         if (! $user || ! Hash::check($password, $user->password)) {
+            Log::warning('auth.login.failed', [
+                'event' => 'login.failed',
+                'login_attempted' => $credentials['login'],
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'request_id' => app()->bound('request_id') ? app('request_id') : null,
+            ]);
+
             return back()
                 ->withErrors(['login' => 'Invalid credentials.'])
                 ->withInput($request->only('login'));
@@ -57,6 +66,13 @@ class AuthController extends Controller
 
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
+
+        Log::info('auth.login.succeeded', [
+            'event' => 'login.succeeded',
+            'user_id' => $user->id,
+            'ip' => $request->ip(),
+            'request_id' => app()->bound('request_id') ? app('request_id') : null,
+        ]);
 
         return redirect()->intended(route('dashboard.index'));
     }
