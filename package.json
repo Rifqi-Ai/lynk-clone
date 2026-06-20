@@ -6,10 +6,15 @@
         "build": "vite build",
         "dev": "vite",
         "lhci": "lhci autorun --config=./lighthouserc.cjs",
-        "lhci:desktop": "LHCI_FORM_FACTOR=desktop lhci autorun --config=./lighthouserc.cjs"
+        "lhci:desktop": "LHCI_FORM_FACTOR=desktop lhci autorun --config=./lighthouserc.cjs",
+        "e2e": "playwright test",
+        "e2e:ui": "playwright test --ui",
+        "e2e:headed": "playwright test --headed",
+        "e2e:report": "playwright show-report"
     },
     "devDependencies": {
         "@lhci/cli": "^0.15.1",
+        "@playwright/test": "^1.61.0",
         "@tailwindcss/typography": "^0.5.20",
         "@tailwindcss/vite": "^4.0.0",
         "concurrently": "^9.0.1",

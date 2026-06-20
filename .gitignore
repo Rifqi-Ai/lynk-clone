@@ -8,6 +8,13 @@
 # Lighthouse CI reports (regenerated on every run)
 /.lighthouseci
 
+# Playwright E2E artifacts
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/blob-report/
+playwright/.last-run.json
+
 # Build outputs
 /public/build
 /public/hot
