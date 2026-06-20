@@ -3,16 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use Illuminate\Database\QueryException;
+use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
 {
+    // ───── Constants (was magic numbers in store()) ─────
+
+    /** Max products a creator may create per hour (DoS guard). */
+    private const MAX_PRODUCTS_PER_HOUR = 20;
+
+    /** Throttle decay window in seconds. */
+    private const PRODUCT_THROTTLE_DECAY_SECONDS = 3600;
+
+    /** Max attempts to find a unique slug before failing. */
+    private const MAX_SLUG_COLLISION_ATTEMPTS = 10;
+
+    // ───── CRUD actions ─────
+
     /**
      * List creator's products (all types).
      */
@@ -46,73 +61,23 @@ class ProductController extends Controller
     /**
      * Store new product (any type).
      * Rate limited per user: 20/hour (prevents DoS via spam creation).
+     *
+     * Reads like prose: rate-limit → validate → build → upload files →
+     * persist with unique slug → redirect.
      */
     public function store(Request $request): RedirectResponse
     {
-        $throttleKey = 'product-create:'.$request->user()->id;
-        if (RateLimiter::tooManyAttempts($throttleKey, 20)) {
-            $seconds = RateLimiter::availableIn($throttleKey);
+        $this->enforceProductCreationRateLimit($request);
 
-            return back()->withErrors(['title' => "Too many products created. Try again in {$seconds}s."]);
-        }
-        RateLimiter::hit($throttleKey, 3600);
         $data = $this->validateProduct($request);
         $metadata = $this->extractMetadata($request);
 
-        $product = new Product;
-        $product->user_id = Auth::id();
-        $product->type = $data['type'];
-        $product->title = $data['title'];
-        $product->slug = Str::slug($data['title']);
-        $product->description = $data['description'] ?? null;
-        $product->price = $data['price'];
-        $product->compare_at_price = $data['compare_at_price'] ?? null;
-        $product->status = $request->boolean('publish') ? 'published' : 'draft';
-        $product->id = Product::generateId();
-        $product->metadata = $metadata;
+        $product = $this->buildProduct($request, $data, $metadata);
+        $this->storeThumbnail($product, $request);
+        $this->storeProductFile($product, $request);
+        $this->saveProductWithUniqueSlug($product, $data['title']);
 
-        // Handle thumbnail
-        if ($request->hasFile('thumbnail')) {
-            $product->thumbnail_path = $request->file('thumbnail')->store(
-                "products/{$request->user()->id}/thumbnails",
-                'public'
-            );
-        }
-
-        // Handle digital file
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $product->file_path = $file->store("products/{$request->user()->id}/files", 'public');
-            $product->file_name = $file->getClientOriginalName();
-            $product->file_size = $file->getSize();
-        }
-
-        // Ensure slug uniqueness per user — loop is best-effort; DB unique index is the safety net.
-        // Retry on unique constraint violation (handles race conditions between concurrent requests).
-        $baseSlug = $product->slug;
-        $attempts = 0;
-        $saved = false;
-        while ($attempts < 10) {
-            try {
-                $product->save();
-                $saved = true;
-                break;
-            } catch (QueryException $e) {
-                if ($e->errorInfo[1] !== 1062) {
-                    throw $e;
-                } // re-throw if not unique violation
-                $attempts++;
-                $product->slug = $baseSlug.'-'.$attempts;
-            }
-        }
-        if (! $saved) {
-            throw new \RuntimeException('Could not generate unique product slug after 10 attempts.');
-        }
-
-        $route = $request->boolean('publish') ? 'dashboard.products.index' : 'dashboard.products.edit';
-
-        return redirect()->route($route, $product)
-            ->with('success', $product->isPublished() ? "{$product->typeLabel} published!" : "{$product->typeLabel} saved as draft.");
+        return $this->redirectAfterSave($product, $request);
     }
 
     /**
@@ -192,7 +157,129 @@ class ProductController extends Controller
         return redirect()->route('dashboard.products.index')->with('success', "{$product->typeLabel} deleted.");
     }
 
-    // ───── Helpers ─────
+    // ───── store() helpers ─────
+
+    /**
+     * Throttle product creation per user. Returns early with validation
+     * error if the budget is exhausted.
+     */
+    private function enforceProductCreationRateLimit(Request $request): void
+    {
+        $key = 'product-create:'.$request->user()->id;
+        if (RateLimiter::tooManyAttempts($key, self::MAX_PRODUCTS_PER_HOUR)) {
+            $seconds = RateLimiter::availableIn($key);
+            // Throw a ValidationException so the redirect back carries the error
+            // to the same view the user came from (consistent with other validation).
+            throw ValidationException::withMessages([
+                'title' => "Too many products created. Try again in {$seconds}s.",
+            ]);
+        }
+        RateLimiter::hit($key, self::PRODUCT_THROTTLE_DECAY_SECONDS);
+    }
+
+    /**
+     * Build a new Product with the validated scalar fields set.
+     * Files and slug collision handling are done in subsequent steps.
+     */
+    private function buildProduct(Request $request, array $data, array $metadata): Product
+    {
+        $product = new Product;
+        $product->id = Product::generateId();
+        $product->user_id = Auth::id();
+        $product->type = $data['type'];
+        $product->title = $data['title'];
+        $product->slug = Str::slug($data['title']);
+        $product->description = $data['description'] ?? null;
+        $product->price = $data['price'];
+        $product->compare_at_price = $data['compare_at_price'] ?? null;
+        $product->status = $request->boolean('publish') ? 'published' : 'draft';
+        $product->metadata = $metadata;
+
+        return $product;
+    }
+
+    /**
+     * Store the uploaded thumbnail on the public disk, if present.
+     */
+    private function storeThumbnail(Product $product, Request $request): void
+    {
+        if (! $request->hasFile('thumbnail')) {
+            return;
+        }
+        $product->thumbnail_path = $request->file('thumbnail')->store(
+            "products/{$product->user_id}/thumbnails",
+            'public'
+        );
+    }
+
+    /**
+     * Store the uploaded digital file on the public disk, if present.
+     * Only relevant for digital and course product types.
+     */
+    private function storeProductFile(Product $product, Request $request): void
+    {
+        if (! $request->hasFile('file')) {
+            return;
+        }
+        $file = $request->file('file');
+        $product->file_path = $file->store("products/{$product->user_id}/files", 'public');
+        $product->file_name = $file->getClientOriginalName();
+        $product->file_size = $file->getSize();
+    }
+
+    /**
+     * Persist the product, retrying with a suffixed slug if the
+     * (user_id, slug) unique constraint is violated.
+     *
+     * Catches the database-agnostic UniqueConstraintViolationException
+     * (Laravel 12+) — works on MySQL, PostgreSQL, and SQLite alike.
+     */
+    private function saveProductWithUniqueSlug(Product $product, string $title): void
+    {
+        $baseSlug = $product->slug;
+        for ($attempt = 0; $attempt < self::MAX_SLUG_COLLISION_ATTEMPTS; $attempt++) {
+            try {
+                $product->save();
+
+                return;
+            } catch (UniqueConstraintViolationException $e) {
+                // Append attempt counter and retry. DB unique index is the
+                // safety net against race conditions between concurrent requests.
+                $product->slug = $baseSlug.'-'.($attempt + 1);
+            }
+        }
+        throw new \RuntimeException(
+            "Could not generate unique product slug for \"{$title}\" after ".
+            self::MAX_SLUG_COLLISION_ATTEMPTS.' attempts.'
+        );
+    }
+
+    /**
+     * Determine the post-save redirect target based on whether
+     * the product was published or saved as draft.
+     */
+    private function redirectAfterSave(Product $product, Request $request): RedirectResponse
+    {
+        $published = $request->boolean('publish');
+        $route = $published
+            ? 'dashboard.products.index'
+            : 'dashboard.products.edit';
+
+        // BUG FIX: dashboard.products.index has no {product} parameter,
+        // so passing $product would attach it as ?product=... query string.
+        // Only the edit route needs the product binding.
+        $parameters = $published ? [] : $product;
+
+        return redirect()->route($route, $parameters)
+            ->with(
+                'success',
+                $published
+                    ? "{$product->typeLabel} published!"
+                    : "{$product->typeLabel} saved as draft."
+            );
+    }
+
+    // ───── Validation + metadata helpers ─────
 
     protected function validateProduct(Request $request, ?Product $product = null): array
     {
