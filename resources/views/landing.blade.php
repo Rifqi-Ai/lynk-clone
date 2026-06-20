@@ -225,14 +225,15 @@
             </p>
         </div>
 
-        {{-- Bento grid layout --}}
+        {{-- Bento grid layout — warm-only palette for premium cohesion --}}
         <div class="bento-grid stagger">
 
-            {{-- Large: Digital Product (2x2) --}}
-            <a href="/demo_alice" class="bento-item-large group relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500 via-brand-500 to-amber-500 text-white p-7 md:p-9 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
+            {{-- Large: Digital Product (2x2) — featured warm gradient --}}
+            <a href="/demo_alice" class="bento-item-large group relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-500 via-brand-600 to-amber-600 text-white p-7 md:p-9 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
                 <div class="absolute -top-12 -right-12 w-64 h-64 bg-white/15 rounded-full blur-2xl group-hover:scale-110 transition-transform"></div>
+                <div class="absolute -bottom-8 -left-8 w-48 h-48 bg-amber-400/30 rounded-full blur-2xl"></div>
                 <div class="relative h-full flex flex-col">
-                    <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center mb-5">
+                    <div class="w-12 h-12 rounded-2xl bg-white/25 backdrop-blur flex items-center justify-center mb-5">
                         <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                     </div>
                     <h3 class="text-2xl md:text-3xl font-bold text-balance">Digital Product</h3>
@@ -244,61 +245,64 @@
                 </div>
             </a>
 
-            {{-- Course (wide) --}}
-            <a href="/demo_alice" class="bento-item-wide group relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
-                <div class="absolute -bottom-12 -right-12 w-48 h-48 bg-white/15 rounded-full blur-2xl group-hover:scale-110 transition-transform"></div>
+            {{-- Course — deep ink card --}}
+            <a href="/demo_alice" class="bento-item-wide group relative overflow-hidden rounded-3xl bg-ink-900 text-white p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
+                <div class="absolute -bottom-12 -right-12 w-48 h-48 bg-brand-500/20 rounded-full blur-2xl group-hover:scale-110 transition-transform"></div>
                 <div class="relative">
-                    <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center mb-4">
-                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-amber-500 flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
                     </div>
                     <h3 class="text-xl font-bold">Online Course</h3>
-                    <p class="mt-1.5 text-sm text-white/85 leading-relaxed">Video lessons dengan progress tracking.</p>
+                    <p class="mt-1.5 text-sm text-white/70 leading-relaxed">Video lessons dengan progress tracking.</p>
                 </div>
             </a>
 
-            {{-- Event --}}
-            <a href="/demo_bob" class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-pink-500 to-rose-500 text-white p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
-                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z"/></svg>
+            {{-- Event — light cream card with warm accent --}}
+            <a href="/demo_bob" class="group relative overflow-hidden rounded-3xl bg-ink-50 text-ink-900 p-6 hover:-translate-y-1 hover:bg-white transition-all duration-300 shadow-card hover:shadow-card-hover ring-1 ring-ink-200">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-amber-500 flex items-center justify-center mb-4">
+                    <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z"/></svg>
                 </div>
                 <h3 class="text-lg font-bold">Event Ticket</h3>
-                <p class="mt-1 text-xs text-white/85">Webinar, workshop + QR check-in</p>
+                <p class="mt-1 text-xs text-ink-600">Webinar, workshop + QR check-in</p>
             </a>
 
-            {{-- Donation --}}
-            <a href="/demo_alice" class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-rose-500 to-red-500 text-white p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
-                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg>
+            {{-- Donation — soft amber card --}}
+            <a href="/demo_alice" class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-100 to-amber-50 text-ink-900 p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover ring-1 ring-amber-200">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mb-4">
+                    <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg>
                 </div>
                 <h3 class="text-lg font-bold">Donation</h3>
-                <p class="mt-1 text-xs text-white/85">Dukung karya fans</p>
+                <p class="mt-1 text-xs text-ink-700">Dukung karya fans</p>
             </a>
 
-            {{-- Blog --}}
-            <a href="/demo_bob" class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
-                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.875C4.254 3.75 3.75 4.254 3.75 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z"/></svg>
+            {{-- Blog — white card with warm border --}}
+            <a href="/demo_bob" class="group relative overflow-hidden rounded-3xl bg-white text-ink-900 p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover ring-1 ring-ink-200">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-amber-500 flex items-center justify-center mb-4">
+                    <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.875C4.254 3.75 3.75 4.254 3.75 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z"/></svg>
                 </div>
                 <h3 class="text-lg font-bold">Blog & Article</h3>
-                <p class="mt-1 text-xs text-white/85">Tulis cerita, tutorial, insight</p>
+                <p class="mt-1 text-xs text-ink-600">Tulis cerita, tutorial, insight</p>
             </a>
 
-            {{-- Appointment --}}
-            <a href="/demo_alice" class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
-                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg>
+            {{-- Appointment — white card with warm border --}}
+            <a href="/demo_alice" class="group relative overflow-hidden rounded-3xl bg-white text-ink-900 p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover ring-1 ring-ink-200">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-amber-500 flex items-center justify-center mb-4">
+                    <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg>
                 </div>
                 <h3 class="text-lg font-bold">Appointment</h3>
-                <p class="mt-1 text-xs text-white/85">1:1 coaching & mentoring</p>
+                <p class="mt-1 text-xs text-ink-600">1:1 coaching & mentoring</p>
             </a>
 
-            {{-- Physical --}}
-            <a href="/demo_bob" class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 to-orange-600 text-white p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
-                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center mb-4">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+            {{-- Physical — deep ink card --}}
+            <a href="/demo_bob" class="group relative overflow-hidden rounded-3xl bg-ink-900 text-white p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
+                <div class="absolute -top-12 -right-12 w-48 h-48 bg-amber-500/20 rounded-full blur-2xl"></div>
+                <div class="relative">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-amber-500 flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-bold">Toko Fisik</h3>
+                    <p class="mt-1 text-xs text-white/70">Produk fisik + ongkir</p>
                 </div>
-                <h3 class="text-lg font-bold">Toko Fisik</h3>
-                <p class="mt-1 text-xs text-white/85">Produk fisik + ongkir</p>
             </a>
         </div>
     </div>
@@ -392,7 +396,7 @@
                         Buat Halaman Gratis
                         <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
                     </a>
-                    <a href="{{ route('pricing') }}" class="inline-flex items-center justify-center gap-2 h-14 px-8 rounded-xl bg-white/15 backdrop-blur border border-white/30 text-white font-bold text-base hover:bg-white/25 hover:-translate-y-0.5 transition-all duration-200">
+                    <a href="{{ route('pricing') }}" class="inline-flex items-center justify-center gap-2 h-14 px-8 rounded-xl bg-transparent border-2 border-white/40 text-white font-bold text-base hover:bg-white/10 hover:border-white/60 hover:-translate-y-0.5 transition-all duration-200">
                         Lihat Pricing
                     </a>
                 </div>
