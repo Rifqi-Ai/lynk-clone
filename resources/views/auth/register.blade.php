@@ -85,6 +85,9 @@
             <form method="POST" action="{{ route('register') }}" class="mt-8 p-6 md:p-8 bg-white rounded-3xl border border-ink-200 shadow-card space-y-5 animate-fade-up">
                 @csrf
 
+                {{-- Honeypot: hidden field humans never see/fill, bots fill eagerly. Rejected in AuthController. --}}
+                <input type="text" name="website" value="" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;" tabindex="-1" autocomplete="off" aria-hidden="true">
+
                 {{-- Name --}}
                 <div>
                     <label for="name" class="form-label">Nama</label>

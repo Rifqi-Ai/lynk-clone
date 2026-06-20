@@ -26,6 +26,14 @@ class AuthController extends Controller
      */
     public function login(Request $request): RedirectResponse
     {
+        // Honeypot: reject bots that fill the hidden "website" field.
+        // Generic error message — don't reveal that the honeypot is the trigger.
+        if ($request->filled('website')) {
+            return back()
+                ->withErrors(['login' => 'Email atau password salah.'])
+                ->withInput($request->only('login'));
+        }
+
         $credentials = $request->validate([
             'login' => ['required', 'string'],
             'password' => ['required', 'string'],
@@ -66,6 +74,14 @@ class AuthController extends Controller
      */
     public function register(Request $request): RedirectResponse
     {
+        // Honeypot: reject bots that fill the hidden "website" field.
+        // Generic error message — don't reveal that the honeypot is the trigger.
+        if ($request->filled('website')) {
+            return back()
+                ->withErrors(['email' => 'Terjadi kesalahan. Silakan coba lagi.'])
+                ->withInput();
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'username' => [

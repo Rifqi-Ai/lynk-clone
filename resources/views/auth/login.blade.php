@@ -58,6 +58,9 @@
             <form method="POST" action="{{ route('login') }}" class="mt-6 p-6 md:p-8 bg-white rounded-3xl border border-ink-200 shadow-card space-y-5 animate-fade-up">
                 @csrf
 
+                {{-- Honeypot: hidden field humans never see/fill, bots fill eagerly. Rejected in AuthController. --}}
+                <input type="text" name="website" value="" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;" tabindex="-1" autocomplete="off" aria-hidden="true">
+
                 <div>
                     <label for="login" class="form-label">Email atau Username</label>
                     <input id="login" name="login" type="text" required autocomplete="username" autofocus
