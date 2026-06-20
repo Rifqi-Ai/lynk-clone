@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\RequestId;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -22,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Add security headers (X-Frame-Options, X-Content-Type-Options, etc.)
         $middleware->append(SecurityHeaders::class);
+
+        // Add X-Request-ID to every request for tracing / log correlation
+        $middleware->prepend(RequestId::class);
 
         // SECURITY: Apply global throttle (240 req/min per IP) to mitigate DoS / scraping.
         // Laravel's built-in 'throttle' middleware uses config('cache') so works without extra setup.

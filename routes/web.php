@@ -10,14 +10,17 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PublicProfileController;
-use App\Models\Product;
-use App\Models\User;
+use App\Http\Controllers\SeoController;
 use Illuminate\Support\Facades\Route;
 
 // ───── Landing / Marketing ─────
 Route::get('/', [LandingController::class, 'index'])->name('home');
 Route::view('/pricing', 'pages.pricing')->name('pricing');
 Route::view('/faq', 'pages.faq')->name('faq');
+
+// ───── SEO endpoints ─────
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::view('/about', 'pages.about')->name('about');
 Route::view('/terms', 'pages.terms')->name('terms');
 Route::view('/privacy', 'pages.privacy')->name('privacy');
@@ -91,43 +94,8 @@ Route::get('/health', function () {
     return response()->json($checks + ['healthy' => $allHealthy], $allHealthy ? 200 : 503);
 });
 
-Route::get('/sitemap.xml', function () {
-    $users = User::whereNotNull('username')->get();
-    $products = Product::where('status', 'published')->get();
-
-    $urls = [];
-    // Home
-    $urls[] = ['loc' => url('/'), 'changefreq' => 'daily', 'priority' => '1.0'];
-    // Marketing pages
-    foreach (['pricing', 'faq', 'about'] as $page) {
-        $urls[] = ['loc' => url('/'.$page), 'changefreq' => 'monthly', 'priority' => '0.5'];
-    }
-    // User profiles
-    foreach ($users as $user) {
-        $urls[] = ['loc' => url('/'.$user->username), 'changefreq' => 'weekly', 'priority' => '0.8'];
-    }
-    // Products
-    foreach ($products as $product) {
-        $urls[] = [
-            'loc' => url('/'.$product->owner->username.'/'.$product->id),
-            'changefreq' => 'weekly',
-            'priority' => '0.7',
-        ];
-    }
-
-    $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
-    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
-    foreach ($urls as $u) {
-        $xml .= "  <url>\n";
-        $xml .= "    <loc>{$u['loc']}</loc>\n";
-        $xml .= "    <changefreq>{$u['changefreq']}</changefreq>\n";
-        $xml .= "    <priority>{$u['priority']}</priority>\n";
-        $xml .= "  </url>\n";
-    }
-    $xml .= '</urlset>';
-
-    return response($xml, 200, ['Content-Type' => 'application/xml']);
-})->name('sitemap');
+// ───── SEO endpoints (handled by SeoController) ─────
+// /sitemap.xml and /robots.txt are registered near the top of this file
 
 // ───── Auth ─────
 Route::middleware('guest')->group(function () {

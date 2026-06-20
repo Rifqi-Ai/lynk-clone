@@ -5,10 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $product->title }} — {{ '@' . $creator->username }}</title>
     <meta name="description" content="{{ Str::limit($product->description ?? $product->title, 160) }}">
+    <link rel="canonical" href="{{ url('/' . $creator->username . '/' . $product->id) }}">
     <meta property="og:title" content="{{ $product->title }}">
     <meta property="og:description" content="{{ Str::limit($product->description ?? '', 200) }}">
     <meta property="og:image" content="{{ $product->thumbnail_url ?? $creator->avatar_url }}">
     <meta property="og:type" content="product">
+    <meta property="og:url" content="{{ url('/' . $creator->username . '/' . $product->id) }}">
+    <meta property="product:price:amount" content="{{ (float) $product->price }}">
+    <meta property="product:price:currency" content="IDR">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $product->title }}">
+    <meta name="twitter:description" content="{{ Str::limit($product->description ?? '', 200) }}">
+    <meta name="twitter:image" content="{{ $product->thumbnail_url ?? $creator->avatar_url }}">
 
     <link rel="icon" type="image/png" href="{{ $creator->avatar_url }}">
 
@@ -27,8 +35,8 @@
             "@@type": "Offer",
             "price": {{ json_encode((float) $product->price) }},
             "priceCurrency": "IDR",
-            "availability": "https://schema.org/InStock",
-            "url": {{ json_encode(url()->current()) }},
+            "availability": "{{ $product->status === 'published' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' }}",
+            "url": {{ json_encode(url('/' . $creator->username . '/' . $product->id)) }},
             "seller": {
                 "@@type": "Person",
                 "name": {{ json_encode($creator->name) }}

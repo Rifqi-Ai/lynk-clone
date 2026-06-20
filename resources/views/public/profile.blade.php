@@ -7,14 +7,33 @@
 
     <title>{{ '@' . $creator->username }}{{ $creator->title ? ' — ' . $creator->title : '' }}</title>
     <meta name="description" content="{{ Str::limit($creator->bio ?? $creator->display_title, 160) }}">
+    <link rel="canonical" href="{{ url('/' . $creator->username) }}">
 
     {{-- OG / Twitter --}}
     <meta property="og:title" content="{{ '@' . $creator->username }}">
     <meta property="og:description" content="{{ Str::limit($creator->bio ?? $creator->display_title, 200) }}">
     <meta property="og:type" content="profile">
     <meta property="og:image" content="{{ $creator->avatar_url }}">
+    <meta property="og:url" content="{{ url('/' . $creator->username) }}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ '@' . $creator->username }}">
+    <meta name="twitter:description" content="{{ Str::limit($creator->bio ?? $creator->display_title, 200) }}">
+    <meta name="twitter:image" content="{{ $creator->avatar_url }}">
 
     <link rel="icon" type="image/png" href="{{ $creator->avatar_url }}">
+
+    {{-- JSON-LD: Person structured data for Google rich results --}}
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "Person",
+        "name": {{ json_encode($creator->name) }},
+        "alternateName": {{ json_encode('@' . $creator->username) }},
+        "description": {{ json_encode(Str::limit($creator->bio ?? $creator->display_title, 500)) }},
+        "image": {{ json_encode($creator->avatar_url) }},
+        "url": {{ json_encode(url('/' . $creator->username)) }}
+    }
+    </script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
