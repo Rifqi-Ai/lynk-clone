@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     // (signature-verified) and Order state machine methods can mutate these. Prevents attackers
     // from POSTing payment_status=paid to mark their own orders as paid.
 ])]
+
+/**
+ * Sensitive fields hidden from default JSON serialization.
+ * - duitku_response: payment gateway internal response (bank codes, raw API data)
+ * - metadata: may contain internal flags (fraud_score, internal_notes, admin_data)
+ * Use $model->makeVisible([...]) on the route that legitimately shows them.
+ */
+#[Hidden(['duitku_response', 'metadata'])]
 class Order extends Model
 {
     use HasFactory;
