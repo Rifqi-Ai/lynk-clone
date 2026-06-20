@@ -7,6 +7,9 @@ use App\Models\Product;
 use App\Models\User;
 use App\Services\DuitkuService;
 use App\Services\OrderService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,76 +19,34 @@ class PublicProfileController extends Controller
 {
     /**
      * Show creator's public profile with search/filter.
+     *
+     * Reads top-down: resolve creator → build query → apply filters/sort →
+     * fetch → increment views → resolve featured → exclude from grid →
+     * compute counts → return view.
      */
     public function show(Request $request, string $username)
     {
         $creator = User::where('username', $username)->firstOrFail();
 
-        $query = $creator->publishedProducts();
         $typeFilter = $request->query('type');
         $search = trim((string) $request->query('q', ''));
+        $sort = (string) $request->query('sort', 'latest');
 
-        // Filter by type
-        if ($typeFilter && array_key_exists($typeFilter, Product::TYPES)) {
-            $query->where('type', $typeFilter);
-        }
-
-        // Search by title/description
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'LIKE', "%{$search}%")
-                    ->orWhere('description', 'LIKE', "%{$search}%");
-            });
-        }
-
-        // Sort: latest by default, or by price
-        $sort = $request->query('sort', 'latest');
-        switch ($sort) {
-            case 'price_asc':
-                $query->orderBy('price', 'asc');
-                break;
-            case 'price_desc':
-                $query->orderBy('price', 'desc');
-                break;
-            case 'popular':
-                $query->orderByDesc('sales_count')->orderByDesc('view_count');
-                break;
-            default:
-                $query->latest();
-        }
+        $query = $creator->publishedProducts();
+        $this->applyFilters($query, $typeFilter, $search);
+        $this->applySort($query, $sort);
 
         $products = $query->get();
+        $this->incrementViewCounts($products);
 
-        foreach ($products as $product) {
-            $product->incrementQuietly('view_count');
-        }
+        $featured = $this->resolveFeaturedProduct($creator, $typeFilter, $search);
+        $products = $this->excludeFeaturedFromGrid($products, $featured);
 
-        // Featured product (only if NOT searching/filtering) — most popular or first
-        $featured = null;
-        if (! $typeFilter && ! $search) {
-            $featured = $creator->products()
-                ->where('status', 'published')
-                ->where('is_featured', true)
-                ->first()
-                ?? $creator->products()
-                    ->where('status', 'published')
-                    ->orderByDesc('sales_count')
-                    ->first();
-            // Exclude featured from the grid below
-            if ($featured) {
-                $products = $products->where('id', '!=', $featured->id)->values();
-            }
-        }
+        $typeCounts = $this->computeTypeCounts($creator);
 
-        // Counts per type (for filter UI)
-        $typeCounts = $creator->products()
-            ->where('status', 'published')
-            ->selectRaw('type, COUNT(*) as count')
-            ->groupBy('type')
-            ->pluck('count', 'type')
-            ->toArray();
-
-        return view('public.profile', compact('creator', 'products', 'featured', 'typeCounts', 'typeFilter', 'search', 'sort'));
+        return view('public.profile', compact(
+            'creator', 'products', 'featured', 'typeCounts', 'typeFilter', 'search', 'sort'
+        ));
     }
 
     /**
@@ -216,5 +177,104 @@ class PublicProfileController extends Controller
 
             return back()->withErrors(['payer_email' => 'Payment gateway error. Please try again.']);
         }
+    }
+
+    // ───── show() helpers ─────
+
+    /**
+     * Apply type filter and search filter to the product query.
+     * Invalid type filters are silently ignored (graceful).
+     *
+     * Accepts either a Builder (e.g. ->newQuery()) or a Relation
+     * (e.g. ->hasMany() from creator->products()) — both proxy where().
+     */
+    private function applyFilters(Builder|Relation $query, ?string $typeFilter, string $search): void
+    {
+        if ($typeFilter && array_key_exists($typeFilter, Product::TYPES)) {
+            $query->where('type', $typeFilter);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%");
+            });
+        }
+    }
+
+    /**
+     * Apply sort order to the product query.
+     * Unknown sort values fall back to 'latest' (by created_at desc).
+     */
+    private function applySort(Builder|Relation $query, string $sort): void
+    {
+        match ($sort) {
+            'price_asc' => $query->orderBy('price', 'asc'),
+            'price_desc' => $query->orderBy('price', 'desc'),
+            'popular' => $query->orderByDesc('sales_count')->orderByDesc('view_count'),
+            default => $query->latest(),
+        };
+    }
+
+    /**
+     * Bump view_count for every product in the collection in a single
+     * SQL UPDATE (was: N+1 — one UPDATE per product in a loop).
+     * Uses increment() (not incrementQuietly) to fire model events; this
+     * matches the original behavior in terms of the DB side-effect.
+     */
+    private function incrementViewCounts(Collection $products): void
+    {
+        if ($products->isEmpty()) {
+            return;
+        }
+        Product::whereIn('id', $products->pluck('id'))->increment('view_count');
+    }
+
+    /**
+     * Resolve the featured product to highlight at the top of the page.
+     * Returns null when the user is searching or filtering (featured
+     * would just be in the way).
+     */
+    private function resolveFeaturedProduct(User $creator, ?string $typeFilter, string $search): ?Product
+    {
+        if ($typeFilter || $search) {
+            return null;
+        }
+
+        return $creator->products()
+            ->where('status', 'published')
+            ->where('is_featured', true)
+            ->first()
+            ?? $creator->products()
+                ->where('status', 'published')
+                ->orderByDesc('sales_count')
+                ->first();
+    }
+
+    /**
+     * Remove the featured product from the grid collection so it doesn't
+     * appear twice on the page.
+     */
+    private function excludeFeaturedFromGrid(Collection $products, ?Product $featured): Collection
+    {
+        if (! $featured) {
+            return $products;
+        }
+
+        return $products->where('id', '!=', $featured->id)->values();
+    }
+
+    /**
+     * Compute per-type counts for the filter UI (e.g. "Digital (3)").
+     * Only published products are counted.
+     */
+    private function computeTypeCounts(User $creator): array
+    {
+        return $creator->products()
+            ->where('status', 'published')
+            ->selectRaw('type, COUNT(*) as count')
+            ->groupBy('type')
+            ->pluck('count', 'type')
+            ->toArray();
     }
 }
