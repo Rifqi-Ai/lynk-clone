@@ -4,9 +4,12 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "lhci": "lhci autorun --config=./lighthouserc.cjs",
+        "lhci:desktop": "LHCI_FORM_FACTOR=desktop lhci autorun --config=./lighthouserc.cjs"
     },
     "devDependencies": {
+        "@lhci/cli": "^0.15.1",
         "@tailwindcss/typography": "^0.5.20",
         "@tailwindcss/vite": "^4.0.0",
         "concurrently": "^9.0.1",

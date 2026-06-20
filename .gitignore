@@ -5,6 +5,9 @@
 .pnp.js
 .yarn/install-state.gz
 
+# Lighthouse CI reports (regenerated on every run)
+/.lighthouseci
+
 # Build outputs
 /public/build
 /public/hot

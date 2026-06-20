@@ -1,0 +1,81 @@
+name: Lighthouse CWV
+
+# Runs on PRs that touch the app or the workflow itself.
+# Builds the production output, runs the gate, uploads reports
+# (even on failure) so a red check is debuggable.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'resources/**'
+      - 'routes/**'
+      - 'public/**'
+      - 'config/**'
+      - 'package.json'
+      - 'lighthouserc.cjs'
+      - '.github/workflows/lighthouse.yml'
+      - 'vite.config.js'
+      - 'tailwind.config.js'
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    name: Lighthouse CWV (landing page)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, dom, fileinfo, mysql, sqlite, gd, curl, zip
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      # Build the Vite frontend assets for production.
+      - name: Build Vite assets
+        run: npm run build
+
+      # Optimize Laravel for production: cached config/routes/views
+      # so we're not measuring dev-mode bloat.
+      - name: Optimize Laravel
+        run: |
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+
+      # Run the Lighthouse CI gate — fail the job if any budget
+      # in lighthouserc.cjs is exceeded.
+      - name: Run Lighthouse CI
+        run: npm run lhci
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci
+          if-no-files-found: ignore
+          retention-days: 14
