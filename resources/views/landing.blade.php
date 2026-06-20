@@ -1,150 +1,181 @@
 @extends('layouts.app')
 
-@section('title', 'Linka — Satu link, jual apapun. Powering the Creator Economy.')
-@section('description', 'Buat halaman kamu, jual produk digital, course, event, appointment, dan lainnya. Gratis untuk mulai, upgrade saat berkembang.')
+@section('title', 'Linka — Satu link. Tak terhingga kemungkinan.')
+@section('description', 'Buat halaman Linka kamu, jual produk digital, course, event, donation, sampai toko fisik. Gratis untuk mulai, upgrade saat berkembang.')
 
 @section('content')
-{{-- ============================================================
-     HERO SECTION
-     ============================================================ --}}
-<section class="relative overflow-hidden">
-    {{-- Background: warm radial gradient + grid pattern --}}
-    <div class="absolute inset-0 -z-10 bg-gradient-to-b from-brand-50/60 via-white to-white"></div>
-    <div class="absolute inset-0 -z-10 opacity-30" style="background-image: radial-gradient(circle at 1px 1px, #FF6B35 1px, transparent 0); background-size: 32px 32px;"></div>
 
-    {{-- Floating blur orbs --}}
-    <div class="absolute -top-20 -right-20 w-96 h-96 bg-brand-300/20 rounded-full blur-3xl -z-10"></div>
-    <div class="absolute top-1/2 -left-32 w-72 h-72 bg-accent/20 rounded-full blur-3xl -z-10"></div>
+{{-- ============================================================
+     HERO — animated mesh gradient + animated text
+     ============================================================ --}}
+<section class="relative overflow-hidden mesh-gradient">
+    {{-- Floating orbs --}}
+    <div class="absolute top-1/4 -right-32 w-[500px] h-[500px] bg-brand-400/30 rounded-full blur-3xl animate-float"></div>
+    <div class="absolute bottom-1/4 -left-32 w-[500px] h-[500px] bg-amber-400/30 rounded-full blur-3xl animate-float-slow"></div>
+    <div class="absolute top-1/2 left-1/3 w-96 h-96 bg-rose-400/20 rounded-full blur-3xl animate-float"></div>
+
+    {{-- Subtle grid overlay --}}
+    <div class="absolute inset-0 opacity-40 bg-grid"></div>
 
     <div class="container-linka section relative">
-        <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div class="grid lg:grid-cols-12 gap-12 lg:gap-16 items-center">
 
-            {{-- ─── Copy ─── --}}
-            <div class="text-center lg:text-left">
+            {{-- ─── Copy (7 cols) ─── --}}
+            <div class="lg:col-span-7 text-center lg:text-left">
                 {{-- Eyebrow badge --}}
-                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-brand-200 shadow-sm text-xs font-semibold text-brand-700 mb-6">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur border border-brand-200 shadow-sm text-xs font-bold text-brand-700 mb-6 animate-fade-up">
                     <span class="relative flex w-2 h-2">
                         <span class="absolute inline-flex w-full h-full rounded-full bg-brand-400 opacity-75 animate-ping"></span>
                         <span class="relative inline-flex w-2 h-2 rounded-full bg-brand-500"></span>
                     </span>
-                    Powering 5,000+ Indonesian creators
+                    Powering 5,000+ kreator Indonesia
                 </div>
 
-                <h1 class="text-display-xl text-ink-900 text-balance">
-                    Satu link di bio.
-                    <span class="block text-gradient">Jual apapun.</span>
+                <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-ink-900 text-balance leading-[1.05] animate-fade-up">
+                    Satu link.<br>
+                    <span class="text-gradient-warm">Tak terhingga</span><br>
+                    kemungkinan.
                 </h1>
 
-                <p class="mt-6 text-lg md:text-xl text-ink-600 leading-relaxed max-w-xl mx-auto lg:mx-0 text-pretty">
-                    Produk digital, course, booking, event, donasi, sampai toko fisik.
-                    Mulai gratis, tanpa kartu kredit, langsung terima pembayaran.
+                <p class="mt-6 text-lg md:text-xl text-ink-600 leading-relaxed max-w-xl mx-auto lg:mx-0 text-pretty animate-fade-up">
+                    Produk digital, course, event, donation, sampai toko fisik. Mulai gratis, tanpa kartu kredit, langsung terima pembayaran via Duitku.
                 </p>
 
                 {{-- CTAs --}}
-                <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-                    <a href="{{ route('register') }}" class="btn-cta group">
+                <div class="mt-9 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start animate-fade-up">
+                    <a href="{{ route('register') }}" class="btn-cta group text-base h-13 px-7 py-3.5 shadow-cta animate-pulse-glow">
                         Mulai Gratis Sekarang
-                        <x-heroicon-s-arrow-right class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                        <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
                     </a>
                     <a href="/demo_bob" class="btn-outline-ink group">
-                        <x-heroicon-o-play class="w-4 h-4" />
+                        <svg class="w-4 h-4 group-hover:scale-110 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/></svg>
                         Lihat Demo
                     </a>
                 </div>
 
                 {{-- Trust line --}}
-                <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 justify-center lg:justify-start text-sm text-ink-500">
+                <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 justify-center lg:justify-start text-sm text-ink-600 animate-fade-up">
                     <div class="flex items-center gap-1.5">
-                        <x-heroicon-s-check class="w-4 h-4 text-success" />
-                        <span>Gratis selamanya</span>
+                        <svg class="w-4 h-4 text-success" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                        <span class="font-medium">Gratis selamanya</span>
                     </div>
                     <div class="flex items-center gap-1.5">
-                        <x-heroicon-s-check class="w-4 h-4 text-success" />
-                        <span>Tanpa kartu kredit</span>
+                        <svg class="w-4 h-4 text-success" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                        <span class="font-medium">Tanpa kartu kredit</span>
                     </div>
                     <div class="flex items-center gap-1.5">
-                        <x-heroicon-s-check class="w-4 h-4 text-success" />
-                        <span>Setup 5 menit</span>
+                        <svg class="w-4 h-4 text-success" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                        <span class="font-medium">Setup 5 menit</span>
                     </div>
                 </div>
             </div>
 
-            {{-- ─── Right: Phone + floating UI cards ─── --}}
-            <div class="relative lg:pl-8">
-                {{-- Main phone mockup --}}
-                <div class="relative mx-auto" style="max-width: 340px;">
-                    <div class="relative bg-ink-900 rounded-[2.5rem] p-2.5 shadow-2xl">
-                        <div class="bg-white rounded-[2rem] overflow-hidden aspect-[9/19.5]">
-                            {{-- Status bar --}}
-                            <div class="bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 pt-6 pb-20 relative">
-                                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-ink-900 rounded-b-2xl"></div>
+            {{-- ─── Right: Interactive phone mockup (5 cols) ─── --}}
+            <div class="lg:col-span-5 relative">
+                {{-- Floating stat cards behind phone --}}
+                <div class="absolute -top-4 -left-4 lg:-left-8 z-20 hidden md:block animate-float-slow">
+                    <div class="bg-white rounded-2xl shadow-card-hover p-3.5 border border-ink-200 flex items-center gap-3 max-w-[220px]">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c.1-.621.504-1.125 1.125-1.125H20.25"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-ink-500 font-semibold uppercase tracking-wider">Penjualan</div>
+                            <div class="text-sm font-black text-ink-900">+Rp 2.4jt</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="absolute -bottom-4 -right-4 lg:-right-8 z-20 hidden md:block animate-float">
+                    <div class="bg-white rounded-2xl shadow-card-hover p-3.5 border border-ink-200 max-w-[240px]">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <div class="w-7 h-7 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 text-white text-xs font-bold flex items-center justify-center">A</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-xs font-bold truncate">Alice baru checkout!</div>
                             </div>
-                            <div class="-mt-16 px-5 pb-6 relative">
+                        </div>
+                        <div class="text-[10px] text-ink-500">E-Book Photography · Rp 99K</div>
+                    </div>
+                </div>
+
+                {{-- Phone mockup --}}
+                <div class="relative mx-auto animate-fade-up" style="max-width: 320px;">
+                    {{-- Glow behind phone --}}
+                    <div class="absolute inset-0 bg-gradient-to-br from-brand-500/40 to-amber-500/40 rounded-[3rem] blur-2xl scale-110 -z-10"></div>
+
+                    <div class="relative bg-ink-900 rounded-[2.75rem] p-2.5 shadow-2xl">
+                        <div class="bg-white rounded-[2.25rem] overflow-hidden aspect-[9/19.5] relative">
+                            {{-- Status bar --}}
+                            <div class="bg-gradient-to-br from-brand-500 via-brand-600 to-amber-600 pt-8 pb-24 relative">
+                                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-ink-900 rounded-b-2xl z-10"></div>
+                                <div class="absolute top-2 right-4 text-[10px] font-bold text-white">9:41</div>
+                            </div>
+
+                            {{-- Content overlay --}}
+                            <div class="-mt-20 px-5 pb-6 relative z-10">
                                 {{-- Avatar --}}
                                 <div class="flex justify-center">
-                                    <div class="w-20 h-20 rounded-full p-0.5 bg-white shadow-lg">
-                                        <div class="w-full h-full rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-2xl font-bold">@</div>
+                                    <div class="w-20 h-20 rounded-full p-0.5 bg-gradient-to-br from-white via-brand-200 to-amber-200 shadow-xl">
+                                        <div class="w-full h-full rounded-full bg-gradient-to-br from-brand-500 to-amber-500 flex items-center justify-center text-white text-2xl font-bold">@</div>
                                     </div>
                                 </div>
                                 <div class="text-center mt-3">
                                     <div class="font-bold text-base text-ink-900">@yourname</div>
                                     <div class="text-xs text-ink-500 mt-0.5">Creator & Educator</div>
                                 </div>
+
+                                {{-- Stats row --}}
+                                <div class="flex justify-center gap-4 mt-3 text-[10px]">
+                                    <div class="text-center">
+                                        <div class="font-black text-sm text-ink-900">12</div>
+                                        <div class="text-ink-500">Products</div>
+                                    </div>
+                                    <div class="w-px h-6 bg-ink-200"></div>
+                                    <div class="text-center">
+                                        <div class="font-black text-sm text-ink-900">2.4K</div>
+                                        <div class="text-ink-500">Followers</div>
+                                    </div>
+                                    <div class="w-px h-6 bg-ink-200"></div>
+                                    <div class="text-center">
+                                        <div class="font-black text-sm text-ink-900">847</div>
+                                        <div class="text-ink-500">Sold</div>
+                                    </div>
+                                </div>
+
                                 {{-- Mini link cards --}}
                                 <div class="space-y-2 mt-5">
-                                    <div class="flex items-center gap-2.5 p-2.5 bg-ink-50 rounded-xl">
-                                        <div class="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center text-brand-600">
-                                            <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
+                                    <div class="flex items-center gap-2.5 p-2.5 bg-white rounded-xl border border-ink-200 shadow-xs">
+                                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white">
+                                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <div class="text-xs font-bold text-ink-900 truncate">E-Book Photography</div>
                                             <div class="text-[10px] text-ink-500">Rp 99K</div>
                                         </div>
+                                        <svg class="w-3 h-3 text-ink-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
                                     </div>
-                                    <div class="flex items-center gap-2.5 p-2.5 bg-ink-50 rounded-xl">
-                                        <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
-                                            <x-heroicon-o-academic-cap class="w-4 h-4" />
+                                    <div class="flex items-center gap-2.5 p-2.5 bg-white rounded-xl border border-ink-200 shadow-xs">
+                                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-white">
+                                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
                                         </div>
                                         <div class="flex-1 min-w-0">
-                                            <div class="text-xs font-bold text-ink-900 truncate">Premium Course</div>
-                                            <div class="text-[10px] text-ink-500">Rp 499K</div>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-2.5 p-2.5 bg-ink-50 rounded-xl">
-                                        <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
-                                            <x-heroicon-o-clock class="w-4 h-4" />
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <div class="text-xs font-bold text-ink-900 truncate">1:1 Coaching</div>
+                                            <div class="text-xs font-bold text-ink-900 truncate">Course: Lightroom</div>
                                             <div class="text-[10px] text-ink-500">Rp 299K</div>
+                                        </div>
+                                        <svg class="w-3 h-3 text-ink-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+                                    </div>
+                                    <div class="flex items-center gap-2.5 p-2.5 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl border border-rose-200">
+                                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white">
+                                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="text-xs font-bold text-ink-900 truncate">Dukung karya saya ☕</div>
+                                            <div class="text-[10px] text-ink-500">Donasi</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    {{-- Floating: sale notification --}}
-                    <div class="hidden sm:flex absolute -left-12 lg:-left-20 top-1/4 bg-white rounded-2xl shadow-xl p-3 border border-ink-100 items-center gap-3 animate-bounce-subtle">
-                        <div class="w-9 h-9 rounded-xl bg-success-100 flex items-center justify-center text-success-600">
-                            <x-heroicon-s-banknotes class="w-5 h-5" />
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-ink-500 font-medium">Penjualan baru</div>
-                            <div class="text-sm font-bold text-ink-900">+Rp 1.250.000</div>
-                        </div>
-                    </div>
-
-                    {{-- Floating: followers --}}
-                    <div class="hidden sm:flex absolute -right-8 lg:-right-12 bottom-1/4 bg-white rounded-2xl shadow-xl p-3 border border-ink-100 items-center gap-3 animate-bounce-subtle" style="animation-delay: 1s;">
-                        <div class="w-9 h-9 rounded-xl bg-brand-100 flex items-center justify-center text-brand-600">
-                            <x-heroicon-s-user-plus class="w-5 h-5" />
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-ink-500 font-medium">Follower baru</div>
-                            <div class="text-sm font-bold text-ink-900">+127 hari ini</div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -152,93 +183,23 @@
 </section>
 
 {{-- ============================================================
-     SOCIAL PROOF / TRUSTED BY
+     SOCIAL PROOF BAR — creator logos / stats
      ============================================================ --}}
-<section class="py-10 border-y border-ink-100 bg-white/60 backdrop-blur-sm">
-    <div class="container-linka px-5">
-        <p class="text-center text-xs font-semibold uppercase tracking-wider text-ink-400 mb-6">Dipercaya oleh kreator dan brand Indonesia</p>
-        <div class="flex flex-wrap justify-center items-center gap-x-10 gap-y-3">
-            @foreach(['Traveloka', 'GoPay', 'AJAIB', 'ASUS', 'TCL', 'Hyundai'] as $brand)
-                <span class="text-lg font-bold text-ink-400 hover:text-ink-700 transition">{{ $brand }}</span>
-            @endforeach
-        </div>
-    </div>
-</section>
-
-{{-- ============================================================
-     7 MODULES — what you can sell
-     ============================================================ --}}
-<section id="features" class="section">
+<section class="py-10 border-y border-ink-200 bg-white">
     <div class="container-linka">
-        {{-- Section header --}}
-        <div class="text-center max-w-2xl mx-auto mb-14">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-100 text-brand-700 text-xs font-bold mb-4">
-                <x-heroicon-s-sparkles class="w-3.5 h-3.5" /> 7 Powerful Modules
-            </div>
-            <h2 class="text-display-lg text-ink-900 text-balance">Satu platform. Tujuh cara monetize.</h2>
-            <p class="mt-4 text-lg text-ink-600 text-pretty">
-                Dari produk digital sampai toko fisik. Semua dalam satu link yang elegan.
-            </p>
-        </div>
-
-        {{-- Modules grid --}}
-        @php
-            $modules = [
-                ['icon' => 'arrow-down-tray', 'title' => 'Digital Product', 'desc' => 'Ebook, preset, template, software — file apa pun, sekali bayar.', 'color' => 'brand', 'url' => '/demo_alice'],
-                ['icon' => 'newspaper', 'title' => 'Blog & Article', 'desc' => 'Tulis cerita, tutorial, atau insight. Gratis atau berbayar.', 'color' => 'amber', 'url' => '/demo_bob'],
-                ['icon' => 'calendar-days', 'title' => 'Appointment', 'desc' => 'Jadwalkan 1:1 coaching, mentoring, atau fan meet.', 'color' => 'blue', 'url' => '/demo_alice'],
-                ['icon' => 'academic-cap', 'title' => 'Online Course', 'desc' => 'Upload video course. Track progress, kasih sertifikat.', 'color' => 'purple', 'url' => '/demo_diana'],
-                ['icon' => 'ticket', 'title' => 'Event / Webinar', 'desc' => 'Jual tiket online + QR check-in di venue.', 'color' => 'pink', 'url' => '/demo_bob'],
-                ['icon' => 'heart', 'title' => 'Donation', 'desc' => 'Terima dukungan sekali klik dari fans. Tanpa minimum.', 'color' => 'rose', 'url' => '/demo_alice'],
-                ['icon' => 'gift', 'title' => 'Physical Store', 'desc' => 'Jual merchandise, kelola ongkir, fulfillment dashboard.', 'color' => 'emerald', 'url' => '/demo_eko'],
-                ['icon' => 'link', 'title' => 'Link in Bio', 'desc' => 'Satu link untuk semua konten & produk kamu di Instagram/TikTok.', 'color' => 'cyan', 'url' => '/'],
-            ];
-        @endphp
-
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 stagger">
-            @foreach ($modules as $mod)
-                <a href="{{ $mod['url'] }}" class="group relative block bg-white rounded-2xl border border-ink-200 p-6 shadow-card hover:shadow-card-hover hover:border-ink-300 hover:-translate-y-1 transition-all duration-200">
-                    <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-{{ $mod['color'] }}-100 flex items-center justify-center text-{{ $mod['color'] }}-600 group-hover:scale-110 transition-transform">
-                            <x-dynamic-component :component="'heroicon-o-' . $mod['icon']" class="w-6 h-6" />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="font-bold text-ink-900 group-hover:text-brand-600 transition-colors">{{ $mod['title'] }}</h3>
-                            <p class="text-sm text-ink-500 mt-1 leading-relaxed">{{ $mod['desc'] }}</p>
-                        </div>
-                    </div>
-                    <x-heroicon-s-arrow-right class="absolute top-6 right-6 w-4 h-4 text-ink-300 group-hover:text-brand-500 group-hover:translate-x-1 transition-all" />
-                </a>
-            @endforeach
-        </div>
-    </div>
-</section>
-
-{{-- ============================================================
-     HOW IT WORKS
-     ============================================================ --}}
-<section class="section bg-ink-50">
-    <div class="container-linka">
-        <div class="text-center max-w-2xl mx-auto mb-14">
-            <h2 class="text-display-lg text-ink-900 text-balance">Setup 5 menit. Mulai jualan malam ini juga.</h2>
-        </div>
-
-        <div class="grid md:grid-cols-3 gap-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-center">
             @php
-                $steps = [
-                    ['num' => '01', 'title' => 'Buat halaman', 'desc' => 'Daftar gratis, pilih username, customize tema.'],
-                    ['num' => '02', 'title' => 'Upload produk', 'desc' => 'Tambah produk digital, course, event, atau apapun.'],
-                    ['num' => '03', 'title' => 'Mulai terima bayar', 'desc' => 'Share link di bio. Duitku handle pembayaran otomatis.'],
+                $stats = [
+                    ['val' => '5,000+', 'label' => 'Kreator aktif'],
+                    ['val' => 'Rp 12M+', 'label' => 'Transaksi diproses'],
+                    ['val' => '847K', 'label' => 'Pembeli dilayani'],
+                    ['val' => '4.9/5', 'label' => 'Rating kepuasan'],
                 ];
             @endphp
-            @foreach ($steps as $i => $step)
-                <div class="relative">
-                    <div class="text-7xl font-black text-brand-100 leading-none mb-4">{{ $step['num'] }}</div>
-                    <h3 class="text-xl font-bold text-ink-900">{{ $step['title'] }}</h3>
-                    <p class="mt-2 text-ink-600 leading-relaxed">{{ $step['desc'] }}</p>
-                    @if ($i < 2)
-                        <x-heroicon-s-arrow-right class="hidden md:block absolute top-1/2 -right-4 w-6 h-6 text-ink-300" />
-                    @endif
+            @foreach($stats as $s)
+                <div class="animate-fade-up">
+                    <div class="text-3xl md:text-4xl font-black text-ink-900 text-balance">{{ $s['val'] }}</div>
+                    <div class="text-xs md:text-sm text-ink-500 mt-1.5 font-medium uppercase tracking-wider">{{ $s['label'] }}</div>
                 </div>
             @endforeach
         </div>
@@ -246,100 +207,165 @@
 </section>
 
 {{-- ============================================================
-     TESTIMONIALS
+     MODULES BENTO GRID — 7 ways to monetize
      ============================================================ --}}
 <section class="section">
     <div class="container-linka">
-        <div class="text-center max-w-2xl mx-auto mb-14">
-            <h2 class="text-display-lg text-ink-900 text-balance">Kata mereka yang sudah jualan di Linka</h2>
+        <div class="max-w-2xl mb-12 md:mb-16">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-bold uppercase tracking-wider mb-4 animate-fade-up">
+                <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/></svg>
+                7 cara monetize
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-ink-900 text-balance leading-[1.1] animate-fade-up">
+                Satu halaman.<br>
+                <span class="text-gradient">Tujuh</span> sumber income.
+            </h2>
+            <p class="mt-4 text-lg text-ink-600 text-pretty animate-fade-up">
+                Pilih salah satu atau kombinasikan semuanya. Setiap modul berdiri sendiri tapi saling menguatkan.
+            </p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-5">
+        {{-- Bento grid layout --}}
+        <div class="bento-grid stagger">
+
+            {{-- Large: Digital Product (2x2) --}}
+            <a href="/demo_alice" class="bento-item-large group relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500 via-brand-500 to-amber-500 text-white p-7 md:p-9 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
+                <div class="absolute -top-12 -right-12 w-64 h-64 bg-white/15 rounded-full blur-2xl group-hover:scale-110 transition-transform"></div>
+                <div class="relative h-full flex flex-col">
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center mb-5">
+                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                    </div>
+                    <h3 class="text-2xl md:text-3xl font-bold text-balance">Digital Product</h3>
+                    <p class="mt-2 text-white/85 leading-relaxed max-w-sm">Ebook, preset, template, software — file apapun, sekali bayar. Auto-deliver ke email pembeli.</p>
+                    <div class="mt-auto pt-6 flex items-center gap-2 text-sm font-bold">
+                        Lihat contoh
+                        <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+                    </div>
+                </div>
+            </a>
+
+            {{-- Course (wide) --}}
+            <a href="/demo_alice" class="bento-item-wide group relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
+                <div class="absolute -bottom-12 -right-12 w-48 h-48 bg-white/15 rounded-full blur-2xl group-hover:scale-110 transition-transform"></div>
+                <div class="relative">
+                    <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold">Online Course</h3>
+                    <p class="mt-1.5 text-sm text-white/85 leading-relaxed">Video lessons dengan progress tracking.</p>
+                </div>
+            </a>
+
+            {{-- Event --}}
+            <a href="/demo_bob" class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-pink-500 to-rose-500 text-white p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
+                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center mb-4">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold">Event Ticket</h3>
+                <p class="mt-1 text-xs text-white/85">Webinar, workshop + QR check-in</p>
+            </a>
+
+            {{-- Donation --}}
+            <a href="/demo_alice" class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-rose-500 to-red-500 text-white p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
+                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center mb-4">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold">Donation</h3>
+                <p class="mt-1 text-xs text-white/85">Dukung karya fans</p>
+            </a>
+
+            {{-- Blog --}}
+            <a href="/demo_bob" class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
+                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center mb-4">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.875C4.254 3.75 3.75 4.254 3.75 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold">Blog & Article</h3>
+                <p class="mt-1 text-xs text-white/85">Tulis cerita, tutorial, insight</p>
+            </a>
+
+            {{-- Appointment --}}
+            <a href="/demo_alice" class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
+                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center mb-4">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg>
+                </div>
+                <h3 class="text-lg font-bold">Appointment</h3>
+                <p class="mt-1 text-xs text-white/85">1:1 coaching & mentoring</p>
+            </a>
+
+            {{-- Physical --}}
+            <a href="/demo_bob" class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 to-orange-600 text-white p-6 hover:-translate-y-1 transition-all duration-300 shadow-card hover:shadow-card-hover">
+                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center mb-4">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+                </div>
+                <h3 class="text-lg font-bold">Toko Fisik</h3>
+                <p class="mt-1 text-xs text-white/85">Produk fisik + ongkir</p>
+            </a>
+        </div>
+    </div>
+</section>
+
+{{-- ============================================================
+     HOW IT WORKS — 3 steps
+     ============================================================ --}}
+<section class="section bg-ink-50">
+    <div class="container-linka">
+        <div class="max-w-2xl mb-12 md:mb-16 mx-auto text-center">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold uppercase tracking-wider mb-4 animate-fade-up">
+                <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z" clip-rule="evenodd"/></svg>
+                Setup 5 menit
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-ink-900 text-balance animate-fade-up">
+                Dari nol ke <span class="text-gradient">jualan pertama</span><br>dalam 5 menit.
+            </h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6 stagger">
             @php
-                $testimonials = [
-                    ['quote' => 'Cuma modal 30 menit setup, langsung closing Rp 2 juta di hari pertama. Conversion rate naik 3x lipat sejak pindah ke Linka.', 'name' => 'Rina Maharani', 'role' => 'Content Creator, 125K followers', 'avatar' => 'R'],
-                    ['quote' => 'Course Lightroom saya laku 400+ kopi dalam 2 bulan. Yang paling keren: buyer langsung dapat akses tanpa ribet.', 'name' => 'Andika Wiratama', 'role' => 'Photography Educator', 'avatar' => 'A'],
-                    ['quote' => 'Donation dari fans jadi sumber income kedua terbesar saya. Terima kasih Linka!', 'name' => 'Sari Indah', 'role' => 'Music Artist', 'avatar' => 'S'],
+                $steps = [
+                    ['num' => '01', 'title' => 'Buat halaman', 'desc' => 'Daftar gratis, pilih username, customize bio kamu. Tanpa kartu kredit.'],
+                    ['num' => '02', 'title' => 'Upload produk', 'desc' => 'Pilih tipe produk (digital, course, event, dll). Upload file atau set detail. Publish.'],
+                    ['num' => '03', 'title' => 'Terima pembayaran', 'desc' => 'Bagikan link di bio. Pembeli checkout via Duitku (QRIS, VA, e-wallet). Uang masuk ke rekening kamu.'],
                 ];
             @endphp
-            @foreach ($testimonials as $t)
-                <figure class="bg-white rounded-2xl border border-ink-200 p-6 shadow-card hover:shadow-card-hover transition-shadow">
-                    <div class="flex gap-1 text-amber-400 mb-4">
-                        @for($i=0; $i<5; $i++)
-                            <x-heroicon-s-star class="w-4 h-4" />
-                        @endfor
-                    </div>
-                    <blockquote class="text-ink-700 leading-relaxed">"{{ $t['quote'] }}"</blockquote>
-                    <figcaption class="mt-5 flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-bold">{{ $t['avatar'] }}</div>
-                        <div>
-                            <div class="font-semibold text-ink-900 text-sm">{{ $t['name'] }}</div>
-                            <div class="text-xs text-ink-500">{{ $t['role'] }}</div>
+            @foreach($steps as $s)
+                <div class="card-warm-hover p-7 group relative overflow-hidden">
+                    <div class="absolute -top-8 -right-8 text-7xl font-black text-brand-100/50 group-hover:text-brand-200/70 transition-colors">{{ $s['num'] }}</div>
+                    <div class="relative">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500 to-amber-500 text-white flex items-center justify-center mb-5 shadow-cta">
+                            <span class="font-black">{{ $s['num'] }}</span>
                         </div>
-                    </figcaption>
-                </figure>
+                        <h3 class="text-xl font-bold text-ink-900 text-balance">{{ $s['title'] }}</h3>
+                        <p class="mt-2 text-sm text-ink-600 leading-relaxed">{{ $s['desc'] }}</p>
+                    </div>
+                </div>
             @endforeach
         </div>
     </div>
 </section>
 
 {{-- ============================================================
-     PRICING
+     TESTIMONIAL
      ============================================================ --}}
-<section id="pricing" class="section bg-gradient-to-b from-white via-brand-50/30 to-white">
+<section class="section">
     <div class="container-linka">
-        <div class="text-center max-w-2xl mx-auto mb-14">
-            <h2 class="text-display-lg text-ink-900 text-balance">Harga simpel. Tanpa kejutan.</h2>
-            <p class="mt-4 text-lg text-ink-600">Mulai gratis. Bayar fee hanya kalau jualan.</p>
-        </div>
+        <div class="max-w-4xl mx-auto text-center animate-fade-up">
+            <div class="inline-flex gap-1 text-amber-400 mb-6">
+                @for($i=0;$i<5;$i++)
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006Z"/></svg>
+                @endfor
+            </div>
 
-        @php
-            $plans = [
-                ['name' => 'Starter', 'price' => 'Gratis', 'period' => 'selamanya', 'fee' => '10% fee per transaksi', 'desc' => 'Untuk coba-coba & kreator baru mulai', 'features' => ['Unlimited produk', 'Semua 7 modul', 'Statistik dasar', 'Tema custom', 'Email support'], 'cta' => 'Mulai Gratis', 'highlight' => false, 'icon' => 'rocket-launch'],
-                ['name' => 'Pro', 'price' => 'Rp 99K', 'period' => '/bulan', 'fee' => '5% fee per transaksi', 'desc' => 'Untuk kreator serius yang mau scale', 'features' => ['Semua di Starter', 'Custom domain', 'Remove branding', 'WA notifikasi', 'Analytics advanced', '20 GB storage', 'Priority support'], 'cta' => 'Coba Pro 14 Hari', 'highlight' => true, 'icon' => 'star'],
-                ['name' => 'Business', 'price' => 'Custom', 'period' => '', 'fee' => 'Hingga 0% fee', 'desc' => 'Untuk bisnis & agency', 'features' => ['Semua di Pro', 'Multi-user access', 'API integration', 'Custom email domain', 'Account manager'], 'cta' => 'Hubungi Sales', 'highlight' => false, 'icon' => 'building-office'],
-            ];
-        @endphp
+            <blockquote class="text-2xl md:text-3xl font-bold text-ink-900 text-balance leading-tight">
+                "Cuma 30 menit setup, <span class="text-gradient-warm">closing Rp 2 juta</span> di hari pertama. Conversion rate naik 3x sejak pindah ke Linka."
+            </blockquote>
 
-        <div class="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto items-stretch">
-            @foreach ($plans as $plan)
-                <div class="relative flex flex-col bg-white rounded-3xl border-2 p-7 transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover {{ $plan['highlight'] ? 'border-brand-500 shadow-cta' : 'border-ink-200 shadow-card' }}">
-                    @if ($plan['highlight'])
-                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-brand-500 to-brand-700 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-md">
-                            ⭐ Paling Populer
-                        </div>
-                    @endif
-
-                    {{-- Icon --}}
-                    <div class="w-11 h-11 rounded-xl {{ $plan['highlight'] ? 'bg-brand-500 text-white' : 'bg-ink-100 text-ink-700' }} flex items-center justify-center mb-4">
-                        <x-dynamic-component :component="'heroicon-s-' . $plan['icon']" class="w-5 h-5" />
-                    </div>
-
-                    <h3 class="text-xl font-bold text-ink-900">{{ $plan['name'] }}</h3>
-                    <p class="text-sm text-ink-500 mt-1">{{ $plan['desc'] }}</p>
-
-                    <div class="mt-5 flex items-baseline gap-1.5">
-                        <span class="text-4xl font-bold text-ink-900 tracking-tight">{{ $plan['price'] }}</span>
-                        @if (!empty($plan['period']))
-                            <span class="text-sm text-ink-500">{{ $plan['period'] }}</span>
-                        @endif
-                    </div>
-                    <div class="text-sm text-brand-600 font-semibold mt-1">{{ $plan['fee'] }}</div>
-
-                    <ul class="mt-6 space-y-3 text-sm text-ink-700 flex-1">
-                        @foreach ($plan['features'] as $feat)
-                            <li class="flex gap-2.5">
-                                <x-heroicon-s-check class="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
-                                <span>{{ $feat }}</span>
-                            </li>
-                        @endforeach
-                    </ul>
-
-                    <a href="{{ route('register') }}" class="mt-7 {{ $plan['highlight'] ? 'btn-cta' : 'btn-outline-ink' }}">
-                        {{ $plan['cta'] }}
-                    </a>
+            <div class="mt-8 flex items-center justify-center gap-4">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-xl ring-4 ring-white shadow-md">R</div>
+                <div class="text-left">
+                    <div class="font-bold text-ink-900">Rina Maharani</div>
+                    <div class="text-sm text-ink-500">Content Creator · 250K followers</div>
                 </div>
-            @endforeach
+            </div>
         </div>
     </div>
 </section>
@@ -348,30 +374,32 @@
      FINAL CTA
      ============================================================ --}}
 <section class="section">
-    <div class="container-linka">
-        <div class="relative bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 rounded-3xl p-10 md:p-16 text-center text-white overflow-hidden shadow-cta">
-            {{-- Background pattern --}}
-            <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 20px 20px;"></div>
-            <div class="absolute -top-20 -right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
-            <div class="absolute -bottom-20 -left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
+    <div class="container-narrow">
+        <div class="relative overflow-hidden rounded-3xl mesh-gradient-dark p-10 md:p-14 text-center text-white animate-fade-up">
+            <div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-0 left-0 w-96 h-96 bg-amber-300/20 rounded-full blur-3xl"></div>
 
-            <div class="relative max-w-2xl mx-auto">
-                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur text-xs font-semibold mb-4">
-                    <x-heroicon-s-bolt class="w-3.5 h-3.5" /> Setup 5 menit
-                </div>
-                <h2 class="text-display-lg text-balance">Siap monetize audiens kamu?</h2>
-                <p class="mt-4 text-lg text-brand-100 text-pretty">
-                    Gabung 5,000+ kreator Indonesia yang sudah jualan di Linka. Gratis, tanpa kartu kredit.
+            <div class="relative">
+                <h2 class="text-4xl md:text-5xl font-bold text-balance leading-tight">
+                    Siap monetize audiens kamu?
+                </h2>
+                <p class="mt-4 text-lg text-white/85 max-w-xl mx-auto text-pretty">
+                    Setup dalam 5 menit. Gratis tanpa kartu kredit. Bayar fee hanya kalau jualan.
                 </p>
+
                 <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-                    <a href="{{ route('register') }}" class="inline-flex items-center justify-center gap-2 h-14 px-8 rounded-xl bg-white text-brand-700 font-bold hover:bg-brand-50 hover:-translate-y-0.5 shadow-lg transition-all duration-150">
+                    <a href="{{ route('register') }}" class="inline-flex items-center justify-center gap-2 h-14 px-8 rounded-xl bg-white text-brand-700 font-bold text-base shadow-2xl hover:bg-amber-50 hover:-translate-y-0.5 transition-all duration-200 group">
                         Buat Halaman Gratis
-                        <x-heroicon-s-arrow-right class="w-4 h-4" />
+                        <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
                     </a>
-                    <a href="{{ route('pricing') }}" class="inline-flex items-center justify-center gap-2 h-14 px-8 rounded-xl bg-white/10 backdrop-blur text-white font-semibold hover:bg-white/20 border border-white/20 transition-all">
+                    <a href="{{ route('pricing') }}" class="inline-flex items-center justify-center gap-2 h-14 px-8 rounded-xl bg-white/15 backdrop-blur border border-white/30 text-white font-bold text-base hover:bg-white/25 hover:-translate-y-0.5 transition-all duration-200">
                         Lihat Pricing
                     </a>
                 </div>
+
+                <p class="mt-6 text-sm text-white/70">
+                    Sudah dipakai 5,000+ kreator Indonesia
+                </p>
             </div>
         </div>
     </div>

@@ -8,8 +8,8 @@
             @media print {
                 body { background: white !important; }
                 .no-print { display: none !important; }
-                .ticket-card { box-shadow: none !important; border: 2px solid #FF6B35 !important; }
-                .ticket-header { background: #FF6B35 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                .ticket-card { box-shadow: none !important; border: 2px solid #FF5722 !important; }
+                .ticket-header { background: #FF5722 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             }
         </style>
     @endpush

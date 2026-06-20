@@ -18,12 +18,16 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="antialiased min-h-screen bg-gradient-to-b from-brand-50 via-white to-white">
+<body class="antialiased min-h-screen mesh-gradient">
 
     {{-- Skip link for accessibility --}}
     <a href="#main" class="skip-link">Skip to content</a>
 
-    <main id="main" class="max-w-xl mx-auto py-10 md:py-16 px-5">
+    {{-- Floating orbs for depth --}}
+    <div class="fixed top-1/4 -right-32 w-96 h-96 bg-brand-400/20 rounded-full blur-3xl animate-float-slow pointer-events-none -z-10"></div>
+    <div class="fixed bottom-1/4 -left-32 w-96 h-96 bg-amber-400/20 rounded-full blur-3xl animate-float pointer-events-none -z-10"></div>
+
+    <main id="main" class="max-w-xl mx-auto py-10 md:py-16 px-5 relative">
 
         {{-- ─── Profile header ─── --}}
         <header class="text-center stagger">
