@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\CreatorSaleNotification;
-use App\Mail\OrderConfirmation;
+use App\Jobs\SendOrderNotification;
 use App\Models\EventTicket;
 use App\Models\Order;
 use App\Services\DuitkuService;
@@ -11,7 +10,6 @@ use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 class PaymentCallbackController extends Controller
 {
@@ -25,6 +23,8 @@ class PaymentCallbackController extends Controller
      * - Idempotent: re-callbacks for an already-paid order are no-ops. We use a
      *   DB transaction with `lockForUpdate()` on the order row to prevent concurrent
      *   callbacks from double-crediting creator balance.
+     * - PERF: All notifications (email/WhatsApp) are dispatched to a queue job
+     *   so the callback responds to Duitku within ~50ms (not 3-5s for SMTP).
      */
     public function callback(Request $request, DuitkuService $duitku, WhatsAppService $whatsapp)
     {
@@ -52,7 +52,7 @@ class PaymentCallbackController extends Controller
 
         // Lock the order row for the duration of this transaction so concurrent callbacks
         // serialize (the second callback will see payment_status=paid and skip work).
-        $order = DB::transaction(function () use ($merchantOrderId, $payload, $resultCode, $whatsapp) {
+        $order = DB::transaction(function () use ($merchantOrderId, $payload, $resultCode) {
             $order = Order::lockForUpdate()->find($merchantOrderId);
             if (! $order) {
                 Log::warning('Duitku callback: order not found', ['id' => $merchantOrderId]);
@@ -100,10 +100,6 @@ class PaymentCallbackController extends Controller
                 }
 
                 Log::info('Order paid', ['order_id' => $order->id, 'amount' => $order->total]);
-
-                // Side-effects (email/WhatsApp) — best-effort, OUTSIDE the lock would be ideal
-                // but keeping inside the TX ensures we don't double-send if the TX rolls back.
-                $this->sendOrderNotifications($order, $whatsapp);
             } else {
                 $order->payment_status = 'failed';
                 $order->duitku_response = $payload;
@@ -118,39 +114,14 @@ class PaymentCallbackController extends Controller
             return response('Order not found', 404);
         }
 
+        // Dispatch notification job ASYNCHRONOUSLY (after DB transaction commits).
+        // This ensures the callback returns to Duitku quickly while emails/WhatsApp
+        // are sent in the background.
+        if ($order->payment_status === 'paid') {
+            SendOrderNotification::dispatch($order->id);
+        }
+
         return response('OK', 200);
-    }
-
-    /**
-     * Send order-related notifications (email + WhatsApp). Best-effort — failures
-     * are logged but don't fail the whole payment flow.
-     */
-    protected function sendOrderNotifications(Order $order, WhatsAppService $whatsapp): void
-    {
-        // Buyer confirmation
-        try {
-            Mail::to($order->buyer_email)
-                ->send(new OrderConfirmation($order));
-        } catch (\Throwable $e) {
-            Log::warning('Order confirmation email failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
-        }
-
-        // Creator sale notification
-        try {
-            Mail::to($order->creator->email)
-                ->send(new CreatorSaleNotification($order));
-        } catch (\Throwable $e) {
-            Log::warning('Creator sale notification failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
-        }
-
-        // WhatsApp (if enabled)
-        if ($order->creator->phone ?? null) {
-            try {
-                $whatsapp->sendCreatorSaleNotification($order);
-            } catch (\Throwable $e) {
-                Log::warning('WhatsApp creator notification failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
-            }
-        }
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\EventTicket;
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -115,8 +116,9 @@ class EventController extends Controller
 
     /**
      * Manual create ticket (for offline/walk-in attendees).
+     * Refactored in Phase 9: business logic moved to App\Services\OrderService.
      */
-    public function createWalkin(Request $request, string $username, string $productId)
+    public function createWalkin(Request $request, OrderService $orders, string $username, string $productId)
     {
         $user = Auth::user();
         if (! $user || $user->username !== $username) {
@@ -134,27 +136,20 @@ class EventController extends Controller
             'amount' => 'required|numeric|min:0',
         ]);
 
-        // Create order + ticket manually (cash/offline payment)
-        $feePct = $user->transaction_fee_pct;
-        $total = $validated['amount'];
-        $payout = $total * (1 - $feePct / 100);
-        $fee = $total - $payout;
+        // Create order via OrderService (consistent with online checkout)
+        $order = $orders->createSingleProductOrder(
+            buyer: $user, // creator is also "buyer" of their own walk-in sale
+            creator: $user,
+            product: $product,
+            data: [
+                'payer_email' => $validated['attendee_email'],
+                'amount' => (int) $validated['amount'],
+                'attendee_name' => $validated['attendee_name'],
+            ],
+        );
 
-        $order = Order::create([
-            'id' => Order::generateId(),
-            'buyer_email' => $validated['attendee_email'],
-            'product_id' => $product->id,
-            'creator_user_id' => $user->id,
-            'unit_price' => $total,
-            'quantity' => 1,
-            'subtotal' => $total,
-            'fee_pct' => $feePct,
-            'fee_amount' => $fee,
-            'total' => $total,
-            'creator_payout' => $payout,
-            'metadata' => ['attendee_name' => $validated['attendee_name'], 'walk_in' => true],
-        ]);
-        // payment_status, payment_method, paid_at not fillable — set directly (creator-only flow).
+        // Walk-in = paid in cash → mark paid and credit creator
+        // (uses direct attribute write since payment_status is not fillable)
         $order->payment_status = 'paid';
         $order->payment_method = 'offline_cash';
         $order->paid_at = now();
@@ -168,9 +163,10 @@ class EventController extends Controller
             'ticket_code' => EventTicket::generateCode(),
         ]);
 
+        // Walk-in payments are immediately settled — no callback needed
         $product->increment('sales_count');
-        $user->increment('balance', $payout);
-        $user->increment('total_earnings', $payout);
+        $user->increment('balance', $order->creator_payout);
+        $user->increment('total_earnings', $order->creator_payout);
 
         return back()->with('success', "✅ Tiket walk-in berhasil dibuat untuk {$validated['attendee_name']}");
     }

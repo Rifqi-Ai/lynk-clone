@@ -23,7 +23,73 @@ Route::view('/terms', 'pages.terms')->name('terms');
 Route::view('/privacy', 'pages.privacy')->name('privacy');
 
 // Health check (must be BEFORE catch-all /{username} route to avoid shadowing)
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'time' => now()->toIso8601String()]));
+// Returns 200 with subsystem status if healthy, 503 if any subsystem is down.
+Route::get('/health', function () {
+    $checks = [
+        'app' => 'ok',
+        'time' => now()->toIso8601String(),
+        'env' => app()->environment(),
+        'version' => app()->version(),
+    ];
+
+    $allHealthy = true;
+
+    // Database check
+    try {
+        $dbStart = microtime(true);
+        DB::select('SELECT 1');
+        $checks['database'] = [
+            'status' => 'ok',
+            'latency_ms' => round((microtime(true) - $dbStart) * 1000, 2),
+        ];
+    } catch (Throwable $e) {
+        $checks['database'] = ['status' => 'down', 'error' => $e->getMessage()];
+        $allHealthy = false;
+    }
+
+    // Cache check
+    try {
+        $cacheKey = 'health:'.uniqid();
+        Cache::put($cacheKey, '1', 5);
+        $cacheValue = Cache::get($cacheKey);
+        Cache::forget($cacheKey);
+        if ($cacheValue === '1') {
+            $checks['cache'] = ['status' => 'ok', 'driver' => config('cache.default')];
+        } else {
+            $checks['cache'] = ['status' => 'degraded', 'driver' => config('cache.default')];
+            $allHealthy = false;
+        }
+    } catch (Throwable $e) {
+        $checks['cache'] = ['status' => 'down', 'error' => $e->getMessage()];
+        $allHealthy = false;
+    }
+
+    // Queue check (skip — sync driver always healthy)
+    $queueDriver = config('queue.default');
+    if ($queueDriver !== 'sync') {
+        try {
+            // Try to dispatch a "ping" without executing
+            Queue::size();
+            $checks['queue'] = ['status' => 'ok', 'driver' => $queueDriver, 'pending_jobs' => Queue::size()];
+        } catch (Throwable $e) {
+            $checks['queue'] = ['status' => 'down', 'error' => $e->getMessage()];
+            $allHealthy = false;
+        }
+    } else {
+        $checks['queue'] = ['status' => 'ok', 'driver' => 'sync'];
+    }
+
+    // Storage (public disk) check
+    try {
+        Storage::disk('public')->exists('.');
+        $checks['storage'] = ['status' => 'ok', 'driver' => 'public'];
+    } catch (Throwable $e) {
+        $checks['storage'] = ['status' => 'down', 'error' => $e->getMessage()];
+        $allHealthy = false;
+    }
+
+    return response()->json($checks + ['healthy' => $allHealthy], $allHealthy ? 200 : 503);
+});
 
 Route::get('/sitemap.xml', function () {
     $users = User::whereNotNull('username')->get();
@@ -66,9 +132,9 @@ Route::get('/sitemap.xml', function () {
 // ───── Auth ─────
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
 
     // Google OAuth
     Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
@@ -112,6 +178,7 @@ Route::get('/{username}/{productId}/checkout', [PublicProfileController::class, 
 // POST → create order, redirect to Duitku payment URL
 Route::post('/{username}/{productId}/checkout', [PublicProfileController::class, 'processCheckout'])
     ->name('checkout.process')
+    ->middleware('throttle:checkout')
     ->where(['username' => '[a-zA-Z0-9._-]+', 'productId' => '[a-z0-9]{12}']);
 
 // /{username}/{productId}/learn → course player (only after paid)
@@ -174,6 +241,7 @@ Route::get('/{username}/cart/checkout', [CartController::class, 'checkout'])
 // POST /{username}/cart/checkout → process cart checkout
 Route::post('/{username}/cart/checkout', [CartController::class, 'processCheckout'])
     ->name('cart.process')
+    ->middleware('throttle:cart-checkout')
     ->where('username', '[a-zA-Z0-9._-]+');
 
 // Cart item updates

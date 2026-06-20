@@ -7,7 +7,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Laravel\Socialite\Facades\Socialite;
@@ -32,15 +31,8 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        // Rate limit by IP + login field (prevent brute force on specific account)
-        $throttleKey = 'login:'.$request->ip().':'.strtolower($credentials['login']);
-        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
-            $seconds = RateLimiter::availableIn($throttleKey);
-
-            return back()
-                ->withErrors(['login' => "Too many login attempts. Please try again in {$seconds} seconds."])
-                ->withInput($request->only('login'));
-        }
+        // Rate limit handled by 'throttle:login' middleware in routes/web.php.
+        // Defense: throttle is per (IP + login field) + per-IP-only secondary limit.
 
         $login = $credentials['login'];
         $password = $credentials['password'];
@@ -50,14 +42,10 @@ class AuthController extends Controller
         $user = User::where($field, $login)->first();
 
         if (! $user || ! Hash::check($password, $user->password)) {
-            RateLimiter::hit($throttleKey, 60); // 1 min lockout per failed attempt
-
             return back()
                 ->withErrors(['login' => 'Invalid credentials.'])
                 ->withInput($request->only('login'));
         }
-
-        RateLimiter::clear($throttleKey); // reset on success
 
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();

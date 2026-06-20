@@ -9,12 +9,12 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Services\DuitkuService;
+use App\Services\OrderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\RateLimiter;
 
 class CartController extends Controller
 {
@@ -181,27 +181,16 @@ class CartController extends Controller
     }
 
     /**
-     * Process cart checkout — creates single order with all items,
-     * redirects to Duitku payment page.
-     *
-     * SECURITY:
-     * - sales_count is incremented ONLY on payment callback (not here), preventing
-     *   fake sales-count inflation from abandoned checkouts.
-     * - Whole flow runs in a DB transaction: if Duitku init fails, the order is
-     *   rolled back AND the cart is preserved for retry.
+     * Process cart checkout — creates single order with all items via OrderService.
+     * Refactored in Phase 9: business logic moved to App\Services\OrderService.
+     * Rate limit handled by 'throttle:cart-checkout' middleware in routes/web.php.
      */
     public function processCheckout(
         Request $request,
         DuitkuService $duitku,
+        OrderService $orders,
         string $username
     ): RedirectResponse {
-        // Rate limit per IP
-        $key = 'cart-checkout:'.$request->ip();
-        if (RateLimiter::tooManyAttempts($key, 5)) {
-            return back()->withErrors(['payer_email' => 'Too many attempts. Please try again later.']);
-        }
-        RateLimiter::hit($key, 60);
-
         $creator = User::where('username', $username)->firstOrFail();
         $cart = $this->getOrCreateCart($request, $creator);
 
@@ -214,19 +203,11 @@ class CartController extends Controller
             'payer_email' => ['required', 'email'],
         ]);
 
-        // Load products
-        $cart->load(['items.product', 'voucher']);
-        $subtotal = $cart->subtotal;
-        $voucherDiscount = $cart->voucher_discount ?? 0;
-        $total = max(0, $subtotal - $voucherDiscount);
-
-        // SECURITY: clamp fee to sane range (0-50%)
-        $feePct = max(0, min(50, (float) ($creator->transaction_fee_pct ?? 10)));
-        $feeAmount = $total * ($feePct / 100);
-        $creatorPayout = $total - $feeAmount;
-
         // Save buyer email to cart for re-use
         $cart->update(['buyer_email' => $data['payer_email']]);
+
+        // Load products (with eager loading to avoid N+1)
+        $cart->load(['items.product', 'voucher']);
 
         // Validate that at least one product still exists and is published.
         // (Avoid crashes if a product was deleted/unpublished between add-to-cart and checkout.)
@@ -236,42 +217,20 @@ class CartController extends Controller
         }
         $primaryProduct = $primaryItem->product;
 
+        // OrderService handles all the business logic — wrapped in a single transaction
+        // so cart clear and order creation are atomic.
         try {
-            $order = DB::transaction(function () use ($cart, $creator, $data, $subtotal, $voucherDiscount, $total, $feePct, $feeAmount, $creatorPayout, $primaryProduct) {
-                $order = Order::create([
-                    'buyer_user_id' => Auth::id(),
-                    'buyer_email' => $data['payer_email'],
-                    'product_id' => $primaryProduct->id,
-                    'creator_user_id' => $creator->id,
-                    'unit_price' => $total,
-                    'quantity' => $cart->item_count,
-                    'subtotal' => $subtotal,
-                    'fee_pct' => $feePct,
-                    'fee_amount' => $feeAmount,
-                    'total' => $total,
-                    'creator_payout' => $creatorPayout,
-                    'voucher_code' => $cart->voucher?->code,
-                    'voucher_discount' => $voucherDiscount,
-                    'metadata' => [
-                        'cart_id' => $cart->id,
-                        'items' => $cart->items->map(fn ($i) => [
-                            'product_id' => $i->product_id,
-                            'title' => $i->product?->title ?? '(removed)',
-                            'type' => $i->product?->type ?? 'unknown',
-                            'quantity' => $i->quantity,
-                            'unit_price' => $i->unit_price,
-                        ])->values()->all(),
-                    ],
-                    'expired_at' => now()->addHours(24),
-                ]);
-                // payment_status not fillable — set via attribute write
-                $order->payment_status = 'pending';
-                $order->save();
+            $order = DB::transaction(function () use ($orders, $cart, $creator, $data) {
+                $order = $orders->createCartOrder(
+                    creator: $creator,
+                    buyer: Auth::user(),
+                    items: $cart->items,
+                    payerEmail: $data['payer_email'],
+                    voucherCode: $cart->voucher?->code,
+                    voucherDiscount: $cart->voucher_discount ?? 0,
+                );
 
-                // NOTE: sales_count is incremented ONLY in PaymentCallbackController (on actual payment).
-                // Don't increment here — abandoned checkouts would inflate stats.
-
-                // Clear the cart
+                // Clear the cart (inside same TX as order creation → atomic)
                 $cart->items()->delete();
                 $cart->update([
                     'voucher_id' => null,
@@ -296,8 +255,8 @@ class CartController extends Controller
             return redirect()->away($paymentUrl);
         } catch (\Exception $e) {
             Log::error('Duitku cart init failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
-            // Mark order as failed but keep it for audit trail
-            $order->update(['payment_status' => 'failed']);
+            $order->payment_status = 'failed';
+            $order->save();
 
             return back()->withErrors(['payer_email' => 'Payment gateway error. Please try again.']);
         }
