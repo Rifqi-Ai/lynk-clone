@@ -1,35 +1,48 @@
 @extends('layouts.app')
 
-@section('title', 'Terms of Service')
+@section('title', 'Syarat & Ketentuan')
 @section('content')
-<section class="py-16 px-4">
-    <div class="max-w-3xl mx-auto prose prose-sm">
-        <h1 class="text-3xl font-black">Terms of Service</h1>
-        <p class="text-ink-500">Last updated: {{ now()->format('F j, Y') }}</p>
+<section class="section">
+    <div class="container-narrow">
+        <div class="mb-8">
+            <p class="text-sm text-ink-500 font-semibold">Last updated: June 2026</p>
+            <h1 class="text-display-md text-ink-900 mt-2">Syarat & Ketentuan</h1>
+        </div>
 
-        <h2 class="text-xl font-black mt-8">1. Acceptance</h2>
-        <p>By accessing {{ config('app.name') }}, you agree to these Terms.</p>
+        <div class="prose prose-ink max-w-none prose-headings:font-display prose-headings:tracking-tight prose-a:text-brand-600 bg-white rounded-2xl border border-ink-200 p-8 shadow-card">
+            <h2>1. Penerimaan Syarat</h2>
+            <p>Dengan menggunakan Linka, kamu setuju dengan syarat dan ketentuan ini. Jika tidak setuju, mohon untuk tidak menggunakan layanan kami.</p>
 
-        <h2 class="text-xl font-black mt-8">2. Account</h2>
-        <p>You're responsible for your account credentials and all activity under your account.</p>
+            <h2>2. Akun Pengguna</h2>
+            <ul>
+                <li>Kamu bertanggung jawab atas keamanan akun dan password.</li>
+                <li>Harus berusia minimal 17 tahun atau memiliki izin orang tua/wali.</li>
+                <li>Satu orang hanya boleh memiliki satu akun.</li>
+            </ul>
 
-        <h2 class="text-xl font-black mt-8">3. Content</h2>
-        <p>You retain ownership of content you upload. You grant us a license to display and distribute it via the platform.</p>
+            <h2>3. Konten & Produk</h2>
+            <ul>
+                <li>Konten yang diunggah harus原创 (orisinal) atau kamu memiliki hak untuk menjualnya.</li>
+                <li>Dilarang menjual produk yang melanggar hukum, mengandung SARA, pornografi, atau hak cipta orang lain.</li>
+                <li>Kami berhak menghapus konten yang melanggar tanpa pemberitahuan.</li>
+            </ul>
 
-        <h2 class="text-xl font-black mt-8">4. Payments</h2>
-        <p>Sales are subject to transaction fees based on your plan. Payouts are processed monthly on the 25th.</p>
+            <h2>4. Pembayaran & Fee</h2>
+            <ul>
+                <li>Fee transaksi akan dipotong dari setiap penjualan sukses.</li>
+                <li>Saldo dapat ditarik ke rekening bank terdaftar setelah melewati proses verifikasi.</li>
+                <li>Waktu penarikan: 1-3 hari kerja.</li>
+            </ul>
 
-        <h2 class="text-xl font-black mt-8">5. Prohibited Use</h2>
-        <p>No illegal content, no spam, no fraud, no harassment. We may suspend accounts that violate these rules.</p>
+            <h2>5. Pembatalan & Refund</h2>
+            <p>Kebijakan refund mengikuti kebijakan masing-masing kreator. Linka tidak bertanggung jawab atas sengketa antara kreator dan pembeli, namun kami siap memediasi.</p>
 
-        <h2 class="text-xl font-black mt-8">6. Refunds</h2>
-        <p>Refund policies are set by individual creators. We facilitate but don't mandate refunds.</p>
+            <h2>6. Perubahan Ketentuan</h2>
+            <p>Kami dapat memperbarui syarat ini sewaktu-waktu. Pemberitahuan akan dikirim via email minimal 14 hari sebelum perubahan berlaku.</p>
 
-        <h2 class="text-xl font-black mt-8">7. Limitation of Liability</h2>
-        <p>{{ config('app.name') }} is provided "as is" without warranties. We're not liable for indirect damages.</p>
-
-        <h2 class="text-xl font-black mt-8">8. Changes</h2>
-        <p>We may update these terms. Continued use means acceptance of updated terms.</p>
+            <h2>7. Hubungi Kami</h2>
+            <p>Untuk pertanyaan tentang syarat ini, hubungi: <a href="mailto:legal@linka.id">legal@linka.id</a></p>
+        </div>
     </div>
 </section>
 @endsection
