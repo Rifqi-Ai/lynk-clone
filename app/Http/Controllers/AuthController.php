@@ -24,55 +24,30 @@ class AuthController extends Controller
 
     /**
      * Handle login with username OR email + password.
+     *
+     * Reads top-down: honeypot → validate → lookup → check password →
+     * log → auth + regenerate → redirect.
      */
     public function login(Request $request): RedirectResponse
     {
-        // Honeypot: reject bots that fill the hidden "website" field.
-        // Generic error message — don't reveal that the honeypot is the trigger.
-        if ($request->filled('website')) {
-            return back()
-                ->withErrors(['login' => 'Email atau password salah.'])
-                ->withInput($request->only('login'));
+        $honeypotResponse = $this->enforceHoneypot($request);
+        if ($honeypotResponse) {
+            return $honeypotResponse;
         }
 
-        $credentials = $request->validate([
-            'login' => ['required', 'string'],
-            'password' => ['required', 'string'],
-        ]);
+        $credentials = $this->validateLoginRequest($request);
+        $user = $this->findUserByLogin($credentials['login']);
 
-        // Rate limit handled by 'throttle:login' middleware in routes/web.php.
-        // Defense: throttle is per (IP + login field) + per-IP-only secondary limit.
-
-        $login = $credentials['login'];
-        $password = $credentials['password'];
-
-        // Allow login by username OR email (lynk.id style)
-        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
-        $user = User::where($field, $login)->first();
-
-        if (! $user || ! Hash::check($password, $user->password)) {
-            Log::warning('auth.login.failed', [
-                'event' => 'login.failed',
-                'login_attempted' => $credentials['login'],
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'request_id' => app()->bound('request_id') ? app('request_id') : null,
-            ]);
+        if (! $this->credentialsMatch($user, $credentials['password'])) {
+            $this->logFailedLogin($request, $credentials['login']);
 
             return back()
                 ->withErrors(['login' => 'Invalid credentials.'])
                 ->withInput($request->only('login'));
         }
 
-        Auth::login($user, $request->boolean('remember'));
-        $request->session()->regenerate();
-
-        Log::info('auth.login.succeeded', [
-            'event' => 'login.succeeded',
-            'user_id' => $user->id,
-            'ip' => $request->ip(),
-            'request_id' => app()->bound('request_id') ? app('request_id') : null,
-        ]);
+        $this->logSuccessfulLogin($request, $user);
+        $this->authenticateAndStartSession($request, $user, $request->boolean('remember'));
 
         return redirect()->intended(route('dashboard.index'));
     }
@@ -190,6 +165,118 @@ class AuthController extends Controller
         Auth::login($user, true);
 
         return redirect()->intended(route('dashboard.index'));
+    }
+
+    // ───── login() helpers ─────
+
+    /**
+     * Bot detection: reject requests where the hidden "website" field is filled.
+     * Returns a redirect with a generic error if bot detected, null if human.
+     */
+    private function enforceHoneypot(Request $request): ?RedirectResponse
+    {
+        if (! $request->filled('website')) {
+            return null;
+        }
+
+        return back()
+            ->withErrors(['login' => 'Invalid credentials.'])
+            ->withInput($request->only('login'));
+    }
+
+    /**
+     * Validate the login form. Returns the validated credentials.
+     */
+    private function validateLoginRequest(Request $request): array
+    {
+        return $request->validate([
+            'login' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ]);
+    }
+
+    /**
+     * Find a user by email (case-insensitive, normalized) or username.
+     *
+     * Emails are normalized to lowercase before lookup so that
+     * "LOGIN@EXAMPLE.COM" and "login@example.com" both find the same user,
+     * regardless of DB collation (SQLite is case-sensitive by default,
+     * MySQL utf8mb4_unicode_ci is case-insensitive).
+     */
+    private function findUserByLogin(string $login): ?User
+    {
+        if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
+            return User::where('email', strtolower($login))->first();
+        }
+
+        return User::where('username', $login)->first();
+    }
+
+    /**
+     * Constant-time credential check that doesn't leak whether the user
+     * exists via timing differences.
+     *
+     * SECURITY: BUG FIX — old code did `if (! $user || ! Hash::check(...))`
+     * which short-circuited on missing user (no hash work done), letting
+     * attackers enumerate valid emails by measuring response time.
+     * Now we always run Hash::check against a dummy hash when the user
+     * is missing, so timing is identical for "user not found" and
+     * "wrong password".
+     */
+    private function credentialsMatch(?User $user, string $password): bool
+    {
+        // Pre-computed bcrypt hash of a random string — used as a dummy
+        // when the user is missing so Hash::check always runs.
+        static $dummyHash = null;
+        if ($dummyHash === null) {
+            $dummyHash = Hash::make(Str::random(32));
+        }
+
+        if (! $user) {
+            // Run Hash::check against dummy so timing matches known-user path.
+            Hash::check($password, $dummyHash);
+
+            return false;
+        }
+
+        return Hash::check($password, $user->password);
+    }
+
+    /**
+     * Log a failed login attempt with context for security monitoring.
+     */
+    private function logFailedLogin(Request $request, string $loginAttempted): void
+    {
+        Log::warning('auth.login.failed', [
+            'event' => 'login.failed',
+            'login_attempted' => $loginAttempted,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'request_id' => app()->bound('request_id') ? app('request_id') : null,
+        ]);
+    }
+
+    /**
+     * Log a successful login for security audit trail.
+     */
+    private function logSuccessfulLogin(Request $request, User $user): void
+    {
+        Log::info('auth.login.succeeded', [
+            'event' => 'login.succeeded',
+            'user_id' => $user->id,
+            'ip' => $request->ip(),
+            'request_id' => app()->bound('request_id') ? app('request_id') : null,
+        ]);
+    }
+
+    /**
+     * Authenticate the user and regenerate the session ID to prevent
+     * session fixation attacks.
+     */
+    private function authenticateAndStartSession(Request $request, User $user, bool $remember): void
+    {
+        Auth::login($user, $remember);
+        $request->session()->regenerate();
     }
 
     /**
