@@ -82,7 +82,7 @@ class User extends Authenticatable
         $name = $this->name ?: $this->username ?: '?';
         $initials = strtoupper(mb_substr($name, 0, 1));
 
-        return 'https://ui-avatars.com/api/?name='.urlencode($initials).'&background=2AB57D&color=fff&size=200&bold=true';
+        return 'https://ui-avatars.com/api/?name='.urlencode($initials).'&background=FF5722&color=fff&size=200&bold=true';
     }
 
     /**

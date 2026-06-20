@@ -343,7 +343,7 @@
                         {{-- Trust signals --}}
                         <div class="mt-6 pt-6 border-t border-ink-100 space-y-2.5 text-xs text-ink-500">
                             <div class="flex items-center gap-2">
-                                <x-heroicon-s-shield-check class="w-4 h-4 text-success" />
+                                <x-heroicon-s-shield-check class="w-4 h-4 text-brand-600" />
                                 <span>Pembayaran aman via Duitku</span>
                             </div>
                             <div class="flex items-center gap-2">
@@ -351,7 +351,7 @@
                                 <span>Akses instan setelah bayar</span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <x-heroicon-s-chat-bubble-left-right class="w-4 h-4 text-blue-600" />
+                                <x-heroicon-s-chat-bubble-left-right class="w-4 h-4 text-brand-600" />
                                 <span>Support via WhatsApp</span>
                             </div>
                         </div>
