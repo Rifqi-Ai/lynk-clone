@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Str;
 
 #[Fillable([
     'name', 'email', 'password',
@@ -68,7 +67,7 @@ class User extends Authenticatable
      */
     public function getProfileUrlAttribute(): string
     {
-        return url('/' . $this->username);
+        return url('/'.$this->username);
     }
 
     /**
@@ -82,7 +81,8 @@ class User extends Authenticatable
         // Default avatar with initials
         $name = $this->name ?: $this->username ?: '?';
         $initials = strtoupper(mb_substr($name, 0, 1));
-        return "https://ui-avatars.com/api/?name=" . urlencode($initials) . "&background=2AB57D&color=fff&size=200&bold=true";
+
+        return 'https://ui-avatars.com/api/?name='.urlencode($initials).'&background=2AB57D&color=fff&size=200&bold=true';
     }
 
     /**
@@ -90,7 +90,7 @@ class User extends Authenticatable
      */
     public function getDisplayTitleAttribute(): string
     {
-        return $this->title ?: '@' . $this->username;
+        return $this->title ?: '@'.$this->username;
     }
 
     /**
@@ -116,6 +116,7 @@ class User extends Authenticatable
     {
         // For routes using {user}, lookup by username first (URL slug pattern)
         $field = $field ?: 'username';
+
         return $this->where($field, $value)->firstOrFail();
     }
 }

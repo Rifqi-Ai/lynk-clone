@@ -33,7 +33,7 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL') . '/auth/google/callback'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL').'/auth/google/callback'),
     ],
 
     // ───── Duitku Payment Gateway ─────
@@ -43,8 +43,8 @@ return [
         'api_key' => env('DUITKU_API_KEY', 'dev_mock_key'),
         'merchant_code' => env('DUITKU_MERCHANT_CODE', 'dev_mock_merchant'),
         'production' => env('DUITKU_PRODUCTION', false),
-        'callback_url' => env('DUITKU_CALLBACK_URL', env('APP_URL') . '/payment/callback'),
-        'return_url' => env('DUITKU_RETURN_URL', env('APP_URL') . '/payment/success'),
+        'callback_url' => env('DUITKU_CALLBACK_URL', env('APP_URL').'/payment/callback'),
+        'return_url' => env('DUITKU_RETURN_URL', env('APP_URL').'/payment/success'),
         'default_method' => env('DUITKU_DEFAULT_METHOD', 'VC'), // Virtual Account
     ],
 

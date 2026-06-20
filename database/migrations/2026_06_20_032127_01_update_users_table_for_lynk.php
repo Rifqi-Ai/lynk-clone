@@ -37,7 +37,7 @@ return new class extends Migration
                 'username', 'phone', 'avatar_path', 'cover_path', 'title',
                 'bio', 'social_links', 'appearance', 'plan_tier',
                 'transaction_fee_pct', 'balance', 'total_earnings',
-                'google_id', 'custom_domain', 'verified', 'show_branding'
+                'google_id', 'custom_domain', 'verified', 'show_branding',
             ]);
         });
     }

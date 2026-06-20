@@ -3,12 +3,15 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\Dashboard\FulfillmentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PublicProfileController;
+use App\Models\Product;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 // ───── Landing / Marketing ─────
@@ -20,34 +23,34 @@ Route::view('/terms', 'pages.terms')->name('terms');
 Route::view('/privacy', 'pages.privacy')->name('privacy');
 
 // Health check (must be BEFORE catch-all /{username} route to avoid shadowing)
-Route::get('/health', fn() => response()->json(['status' => 'ok', 'time' => now()->toIso8601String()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'time' => now()->toIso8601String()]));
 
 Route::get('/sitemap.xml', function () {
-    $users = \App\Models\User::whereNotNull('username')->get();
-    $products = \App\Models\Product::where('status', 'published')->get();
+    $users = User::whereNotNull('username')->get();
+    $products = Product::where('status', 'published')->get();
 
     $urls = [];
     // Home
     $urls[] = ['loc' => url('/'), 'changefreq' => 'daily', 'priority' => '1.0'];
     // Marketing pages
     foreach (['pricing', 'faq', 'about'] as $page) {
-        $urls[] = ['loc' => url('/' . $page), 'changefreq' => 'monthly', 'priority' => '0.5'];
+        $urls[] = ['loc' => url('/'.$page), 'changefreq' => 'monthly', 'priority' => '0.5'];
     }
     // User profiles
     foreach ($users as $user) {
-        $urls[] = ['loc' => url('/' . $user->username), 'changefreq' => 'weekly', 'priority' => '0.8'];
+        $urls[] = ['loc' => url('/'.$user->username), 'changefreq' => 'weekly', 'priority' => '0.8'];
     }
     // Products
     foreach ($products as $product) {
         $urls[] = [
-            'loc' => url('/' . $product->owner->username . '/' . $product->id),
+            'loc' => url('/'.$product->owner->username.'/'.$product->id),
             'changefreq' => 'weekly',
             'priority' => '0.7',
         ];
     }
 
-    $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
     foreach ($urls as $u) {
         $xml .= "  <url>\n";
         $xml .= "    <loc>{$u['loc']}</loc>\n";
@@ -143,12 +146,12 @@ Route::middleware('auth')->group(function () {
 
 // Dashboard: shipping & fulfillment (auth required)
 Route::middleware('auth')->prefix('/dashboard/fulfillment')->group(function () {
-    Route::get('/', [\App\Http\Controllers\Dashboard\FulfillmentController::class, 'index'])
+    Route::get('/', [FulfillmentController::class, 'index'])
         ->name('dashboard.fulfillment.index');
-    Route::get('/{orderId}', [\App\Http\Controllers\Dashboard\FulfillmentController::class, 'show'])
+    Route::get('/{orderId}', [FulfillmentController::class, 'show'])
         ->name('dashboard.fulfillment.show')
         ->where('orderId', 'ORD-[A-Z0-9-]+');
-    Route::post('/{orderId}', [\App\Http\Controllers\Dashboard\FulfillmentController::class, 'update'])
+    Route::post('/{orderId}', [FulfillmentController::class, 'update'])
         ->name('dashboard.fulfillment.update')
         ->where('orderId', 'ORD-[A-Z0-9-]+');
 });
@@ -193,6 +196,3 @@ Route::delete('/{username}/cart/voucher', [CartController::class, 'removeVoucher
 Route::post('/payment/callback', [PaymentCallbackController::class, 'callback'])->name('payment.callback');
 Route::get('/payment/success/{order}', [PaymentCallbackController::class, 'success'])->name('payment.success');
 Route::get('/payment/failed/{order}', [PaymentCallbackController::class, 'failed'])->name('payment.failed');
-
-// Health check (already provided by Laravel at /up, but explicit for clarity)
-Route::get('/health', fn() => response()->json(['status' => 'ok', 'time' => now()->toIso8601String()]));

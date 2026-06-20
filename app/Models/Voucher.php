@@ -36,10 +36,19 @@ class Voucher extends Model
      */
     public function isValid(): bool
     {
-        if (!$this->is_active) return false;
-        if ($this->starts_at && $this->starts_at->isFuture()) return false;
-        if ($this->expires_at && $this->expires_at->isPast()) return false;
-        if ($this->usage_limit && $this->usage_count >= $this->usage_limit) return false;
+        if (! $this->is_active) {
+            return false;
+        }
+        if ($this->starts_at && $this->starts_at->isFuture()) {
+            return false;
+        }
+        if ($this->expires_at && $this->expires_at->isPast()) {
+            return false;
+        }
+        if ($this->usage_limit && $this->usage_count >= $this->usage_limit) {
+            return false;
+        }
+
         return true;
     }
 
@@ -48,8 +57,12 @@ class Voucher extends Model
      */
     public function calculateDiscount(float $subtotal): float
     {
-        if (!$this->isValid()) return 0;
-        if ($subtotal < $this->min_purchase) return 0;
+        if (! $this->isValid()) {
+            return 0;
+        }
+        if ($subtotal < $this->min_purchase) {
+            return 0;
+        }
 
         $discount = $this->type === 'percent'
             ? $subtotal * ($this->value / 100)

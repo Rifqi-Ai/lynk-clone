@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,7 +21,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Add security headers (X-Frame-Options, X-Content-Type-Options, etc.)
-        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(SecurityHeaders::class);
+
+        // SECURITY: Apply global throttle (240 req/min per IP) to mitigate DoS / scraping.
+        // Laravel's built-in 'throttle' middleware uses config('cache') so works without extra setup.
+        $middleware->web(append: [
+            ThrottleRequests::class.':240,1',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

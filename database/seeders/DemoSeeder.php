@@ -3,12 +3,14 @@
 namespace Database\Seeders;
 
 use App\Models\CourseModule;
+use App\Models\EventTicket;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DemoSeeder extends Seeder
 {
@@ -243,7 +245,7 @@ class DemoSeeder extends Seeder
             unset($prodData['meta']);
             $product = Product::create(array_merge($prodData, [
                 'id' => Product::generateId(),
-                'slug' => \Illuminate\Support\Str::slug($prodData['title']),
+                'slug' => Str::slug($prodData['title']),
                 'metadata' => $meta,
             ]));
         }
@@ -395,7 +397,7 @@ class DemoSeeder extends Seeder
             for ($i = 0; $i < 3; $i++) {
                 $order = Order::create([
                     'id' => Order::generateId(),
-                    'buyer_email' => "attendee" . ($i + 1) . "@example.com",
+                    'buyer_email' => 'attendee'.($i + 1).'@example.com',
                     'product_id' => $charlieWebinar->id,
                     'creator_user_id' => $charlie->id,
                     'unit_price' => $charlieWebinar->price,
@@ -408,14 +410,14 @@ class DemoSeeder extends Seeder
                     'payment_status' => 'paid',
                     'payment_method' => 'duitku_qris',
                     'paid_at' => now()->subDays(rand(1, 5)),
-                    'metadata' => ['attendee_name' => "Participant " . ($i + 1)],
+                    'metadata' => ['attendee_name' => 'Participant '.($i + 1)],
                 ]);
-                \App\Models\EventTicket::create([
+                EventTicket::create([
                     'order_id' => $order->id,
                     'product_id' => $charlieWebinar->id,
                     'buyer_email' => $order->buyer_email,
-                    'attendee_name' => "Participant " . ($i + 1),
-                    'ticket_code' => \App\Models\EventTicket::generateCode(),
+                    'attendee_name' => 'Participant '.($i + 1),
+                    'ticket_code' => EventTicket::generateCode(),
                     'is_checked_in' => $i === 0, // First one already checked in
                     'checked_in_at' => $i === 0 ? now()->subHour() : null,
                     'checked_in_by' => $i === 0 ? $charlie->name : null,
@@ -463,7 +465,7 @@ class DemoSeeder extends Seeder
             $eko->increment('total_earnings', $ekoSticker->price * 2 * (1 - $eko->transaction_fee_pct / 100));
         }
 
-        $this->command->info('✅ Seeded ' . count($creators) . ' creators with ' . count($products) . ' products and ' . Order::count() . ' orders');
+        $this->command->info('✅ Seeded '.count($creators).' creators with '.count($products).' products and '.Order::count().' orders');
 
         // Add sample vouchers
         Voucher::create([
@@ -486,6 +488,6 @@ class DemoSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        $this->command->info('✅ Seeded ' . Voucher::count() . ' vouchers');
+        $this->command->info('✅ Seeded '.Voucher::count().' vouchers');
     }
 }

@@ -34,7 +34,7 @@ class PublicProfileController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'LIKE', "%{$search}%")
-                  ->orWhere('description', 'LIKE', "%{$search}%");
+                    ->orWhere('description', 'LIKE', "%{$search}%");
             });
         }
 
@@ -62,7 +62,7 @@ class PublicProfileController extends Controller
 
         // Featured product (only if NOT searching/filtering) — most popular or first
         $featured = null;
-        if (!$typeFilter && !$search) {
+        if (! $typeFilter && ! $search) {
             $featured = $creator->products()
                 ->where('status', 'published')
                 ->where('is_featured', true)
@@ -111,7 +111,7 @@ class PublicProfileController extends Controller
         $product = $creator->products()->where('id', $productId)->where('status', 'published')->firstOrFail();
 
         // For physical products out of stock, block checkout
-        if ($product->type === 'physical' && !$product->inStock) {
+        if ($product->type === 'physical' && ! $product->inStock) {
             return back()->with('error', 'Sorry, this product is out of stock.');
         }
 
@@ -128,7 +128,7 @@ class PublicProfileController extends Controller
         string $productId
     ): RedirectResponse {
         // Rate limit per IP
-        $key = 'checkout:' . $request->ip();
+        $key = 'checkout:'.$request->ip();
         if (RateLimiter::tooManyAttempts($key, 5)) {
             return back()->withErrors(['payer_email' => 'Too many attempts. Please try again later.']);
         }
@@ -146,7 +146,17 @@ class PublicProfileController extends Controller
         // Type-specific validation
         switch ($product->type) {
             case 'donation':
-                $rules['amount'] = ['required', 'integer', 'min:1000'];
+                // SECURITY: Cap donation at Rp 100M to prevent abuse / payment-gateway errors.
+                // Preset amounts are validated as a whitelist so client cannot inject arbitrary values.
+                $presets = $product->donation_presets; // from model accessor (typed)
+                $rules['amount'] = ['required', 'integer', 'min:1000', 'max:100000000'];
+                if (! $product->meta('allow_custom', true)) {
+                    $rules['amount'][] = function ($attr, $value, $fail) use ($presets) {
+                        if (! in_array((int) $value, array_map('intval', $presets), true)) {
+                            $fail('Please choose one of the preset amounts.');
+                        }
+                    };
+                }
                 $rules['donor_message'] = ['nullable', 'string', 'max:500'];
                 break;
             case 'appointment':
@@ -157,7 +167,7 @@ class PublicProfileController extends Controller
                 $rules['quantity'] = ['required', 'integer', 'min:1', 'max:10'];
                 if ($product->meta('capacity')) {
                     $sold = $product->paidOrders()->sum('quantity');
-                    $rules['quantity'][] = 'max:' . max(1, $product->meta('capacity') - $sold);
+                    $rules['quantity'][] = 'max:'.max(1, $product->meta('capacity') - $sold);
                 }
                 break;
             case 'physical':
@@ -174,6 +184,10 @@ class PublicProfileController extends Controller
         }
 
         $data = $request->validate($rules);
+
+        // SECURITY: transaction fee MUST be in a sane range. Even if creator account is compromised
+        // and someone sets transaction_fee_pct to -50 or 9999, we clamp to a safe range.
+        $feePct = max(0, min(50, (float) ($creator->transaction_fee_pct ?? 10)));
 
         // Compute amounts
         if ($product->type === 'donation') {
@@ -196,10 +210,10 @@ class PublicProfileController extends Controller
             $orderMetadata['appointment_date'] = $data['appointment_date'];
             $orderMetadata['appointment_time'] = $data['appointment_time'];
         }
-        if ($product->type === 'donation' && !empty($data['donor_message'])) {
+        if ($product->type === 'donation' && ! empty($data['donor_message'])) {
             $orderMetadata['donor_message'] = $data['donor_message'];
         }
-        if ($product->type === 'physical' && !empty($data['ship'])) {
+        if ($product->type === 'physical' && ! empty($data['ship'])) {
             $orderMetadata['shipping_address'] = $data['ship'];
             // Compute estimated shipping cost (flat rate for now)
             $shippingCost = 15000; // flat Rp 15K
@@ -208,7 +222,6 @@ class PublicProfileController extends Controller
         }
 
         $total = $subtotal + $shippingCost;
-        $feePct = $creator->transaction_fee_pct ?? 10;
         $feeAmount = $total * ($feePct / 100);
         $creatorPayout = $total - $feeAmount;
 
@@ -224,10 +237,12 @@ class PublicProfileController extends Controller
             'fee_amount' => $feeAmount,
             'total' => $total,
             'creator_payout' => $creatorPayout,
-            'payment_status' => 'pending',
-            'expired_at' => now()->addHours(24),
             'metadata' => $orderMetadata,
+            'expired_at' => now()->addHours(24),
         ]);
+        // payment_status is NOT fillable — set via attribute write (bypasses mass-assignment)
+        $order->payment_status = 'pending';
+        $order->save();
 
         // For donation: no need to update metadata - current_amount is computed live
         // (See Product::getDonationRaisedAttribute)
@@ -235,9 +250,11 @@ class PublicProfileController extends Controller
         // Initialize Duitku payment
         try {
             $paymentUrl = $duitku->createTransaction($order, $product, $creator, $data['payer_email']);
+
             return redirect()->away($paymentUrl);
         } catch (\Exception $e) {
             Log::error('Duitku init failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+
             return back()->withErrors(['payer_email' => 'Payment gateway error. Please try again.']);
         }
     }

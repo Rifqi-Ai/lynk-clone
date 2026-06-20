@@ -21,7 +21,7 @@ _File size: {{ $product->meta('file_size') }}_
 
 Course Anda sudah siap! Klik tombol di bawah untuk mulai belajar:
 
-@component('mail::button', ['url' => route('course.show', [$creator->username, $product->id]) . '?token=' . \App\Http\Controllers\CourseController::generateAccessToken($product->id), 'color' => 'green'])
+@component('mail::button', ['url' => route('course.show', [$creator->username, $product->id]) . '?token=' . \App\Http\Controllers\CourseController::generateAccessToken($order), 'color' => 'green'])
 📚 Mulai Belajar
 @endcomponent
 

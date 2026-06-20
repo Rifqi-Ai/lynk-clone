@@ -33,9 +33,10 @@ class AuthController extends Controller
         ]);
 
         // Rate limit by IP + login field (prevent brute force on specific account)
-        $throttleKey = 'login:' . $request->ip() . ':' . strtolower($credentials['login']);
+        $throttleKey = 'login:'.$request->ip().':'.strtolower($credentials['login']);
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
+
             return back()
                 ->withErrors(['login' => "Too many login attempts. Please try again in {$seconds} seconds."])
                 ->withInput($request->only('login'));
@@ -48,8 +49,9 @@ class AuthController extends Controller
         $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
         $user = User::where($field, $login)->first();
 
-        if (!$user || !Hash::check($password, $user->password)) {
+        if (! $user || ! Hash::check($password, $user->password)) {
             RateLimiter::hit($throttleKey, 60); // 1 min lockout per failed attempt
+
             return back()
                 ->withErrors(['login' => 'Invalid credentials.'])
                 ->withInput($request->only('login'));
@@ -111,6 +113,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('home');
     }
 
@@ -131,7 +134,7 @@ class AuthController extends Controller
             $googleUser = Socialite::driver('google')->user();
         } catch (\Exception $e) {
             return redirect()->route('login')
-                ->withErrors(['login' => 'Google authentication failed: ' . $e->getMessage()]);
+                ->withErrors(['login' => 'Google authentication failed: '.$e->getMessage()]);
         }
 
         // Find or create user
@@ -139,7 +142,7 @@ class AuthController extends Controller
             ->orWhere('email', $googleUser->getEmail())
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             $user = User::create([
                 'name' => $googleUser->getName() ?? 'User',
                 'email' => $googleUser->getEmail(),
@@ -153,11 +156,11 @@ class AuthController extends Controller
             ]);
         } else {
             // Link Google ID if not set
-            if (!$user->google_id) {
+            if (! $user->google_id) {
                 $user->update(['google_id' => $googleUser->getId()]);
             }
             // Store Google avatar in appearance if user has no avatar
-            if (!$user->avatar_path && $googleUser->getAvatar()) {
+            if (! $user->avatar_path && $googleUser->getAvatar()) {
                 $user->update([
                     'appearance' => array_merge($user->appearance ?? [], ['avatar_url' => $googleUser->getAvatar()]),
                 ]);
@@ -181,7 +184,7 @@ class AuthController extends Controller
         $username = $base;
         $i = 1;
         while (User::where('username', $username)->exists()) {
-            $username = $base . $i;
+            $username = $base.$i;
             $i++;
         }
 

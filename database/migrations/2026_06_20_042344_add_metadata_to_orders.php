@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             $table->json('metadata')->nullable()->after('voucher_discount')
-                  ->comment('Type-specific order data (appointment_date, donor_message, shipping_address, etc)');
+                ->comment('Type-specific order data (appointment_date, donor_message, shipping_address, etc)');
         });
     }
 

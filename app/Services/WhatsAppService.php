@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Order;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -20,8 +21,11 @@ use Illuminate\Support\Facades\Log;
 class WhatsAppService
 {
     protected string $provider;
+
     protected string $apiKey;
+
     protected string $sender;
+
     protected bool $production;
 
     public function __construct()
@@ -35,25 +39,27 @@ class WhatsAppService
     /**
      * Send WhatsApp message.
      *
-     * @param string $phone E.164 format (e.g., "6281234567890")
-     * @param string $message Message body (supports line breaks)
+     * @param  string  $phone  E.164 format (e.g., "6281234567890")
+     * @param  string  $message  Message body (supports line breaks)
      * @return bool Success
      */
     public function send(string $phone, string $message): bool
     {
         // Normalize phone: strip non-digits, ensure starts with 62
         $phone = $this->normalizePhone($phone);
-        if (!$phone) {
+        if (! $phone) {
             Log::warning('WhatsApp: invalid phone', ['phone' => $phone]);
+
             return false;
         }
 
         // Log mode (dev) — just write to log
-        if (!$this->production || $this->provider === 'log') {
+        if (! $this->production || $this->provider === 'log') {
             Log::info('WhatsApp message (dev log mode)', [
                 'to' => $phone,
                 'message' => $message,
             ]);
+
             return true;
         }
 
@@ -68,6 +74,7 @@ class WhatsAppService
                 'phone' => $phone,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -75,16 +82,16 @@ class WhatsAppService
     /**
      * Send order confirmation to buyer via WhatsApp.
      */
-    public function sendOrderConfirmation(\App\Models\Order $order): bool
+    public function sendOrderConfirmation(Order $order): bool
     {
         $creator = $order->creator;
         $product = $order->product;
 
         $message = "✅ *Order Confirmed!*\n\n"
-            . "Halo! Pembayaran Anda untuk *{$product->title}* sudah kami terima.\n\n"
-            . "📦 Order ID: `{$order->id}`\n"
-            . "💰 Total: Rp " . number_format($order->total, 0, ',', '.') . "\n"
-            . "🏪 Creator: @{$creator->username}\n\n";
+            ."Halo! Pembayaran Anda untuk *{$product->title}* sudah kami terima.\n\n"
+            ."📦 Order ID: `{$order->id}`\n"
+            .'💰 Total: Rp '.number_format($order->total, 0, ',', '.')."\n"
+            ."🏪 Creator: @{$creator->username}\n\n";
 
         // Type-specific
         switch ($product->type) {
@@ -93,7 +100,7 @@ class WhatsAppService
                 $message .= "🎟️ Tiket event: {$ticketUrl}\n";
                 break;
             case 'course':
-                $message .= "📚 Course link: " . route('course.show', [$creator->username, $product->id]) . "\n";
+                $message .= '📚 Course link: '.route('course.show', [$creator->username, $product->id])."\n";
                 break;
             case 'appointment':
                 $date = data_get($order->metadata, 'appointment_date');
@@ -113,21 +120,23 @@ class WhatsAppService
     /**
      * Send sale notification to creator via WhatsApp.
      */
-    public function sendCreatorSaleNotification(\App\Models\Order $order): bool
+    public function sendCreatorSaleNotification(Order $order): bool
     {
         $creator = $order->creator;
         $product = $order->product;
 
         $message = "💰 *New Sale!*\n\n"
-            . "Anda mendapat penjualan baru:\n\n"
-            . "📦 {$product->title}\n"
-            . "💵 Earnings: Rp " . number_format($order->creator_payout, 0, ',', '.') . "\n"
-            . "📧 Buyer: {$order->buyer_email}\n\n"
-            . "Cek dashboard: " . route('dashboard.index');
+            ."Anda mendapat penjualan baru:\n\n"
+            ."📦 {$product->title}\n"
+            .'💵 Earnings: Rp '.number_format($order->creator_payout, 0, ',', '.')."\n"
+            ."📧 Buyer: {$order->buyer_email}\n\n"
+            .'Cek dashboard: '.route('dashboard.index');
 
         // Use creator's phone if available
         $phone = $creator->phone ?? '';
-        if (!$phone) return false;
+        if (! $phone) {
+            return false;
+        }
 
         return $this->send($phone, $message);
     }
@@ -135,18 +144,18 @@ class WhatsAppService
     /**
      * Send shipping update to buyer.
      */
-    public function sendShippingUpdate(\App\Models\Order $order, string $newStatus, ?string $trackingNumber = null): bool
+    public function sendShippingUpdate(Order $order, string $newStatus, ?string $trackingNumber = null): bool
     {
         $creator = $order->creator;
 
         $message = "📦 *Shipping Update*\n\n"
-            . "Order *{$order->product->title}* status: *{$newStatus}*\n";
+            ."Order *{$order->product->title}* status: *{$newStatus}*\n";
 
         if ($trackingNumber) {
             $message .= "🔢 Resi: `{$trackingNumber}`\n";
         }
 
-        $message .= "\nCek: " . route('dashboard.fulfillment.show', $order->id);
+        $message .= "\nCek: ".route('dashboard.fulfillment.show', $order->id);
 
         return $this->send($order->buyer_email, $message);
     }
@@ -156,15 +165,17 @@ class WhatsAppService
     protected function normalizePhone(string $phone): ?string
     {
         $phone = preg_replace('/[^0-9]/', '', $phone);
-        if (empty($phone)) return null;
+        if (empty($phone)) {
+            return null;
+        }
 
         // Convert 08xx to 628xx
         if (str_starts_with($phone, '0')) {
-            $phone = '62' . substr($phone, 1);
+            $phone = '62'.substr($phone, 1);
         }
 
         // Validate Indonesian mobile (08xx, 628xx, +628xx)
-        if (!preg_match('/^62[0-9]{9,13}$/', $phone)) {
+        if (! preg_match('/^62[0-9]{9,13}$/', $phone)) {
             return null;
         }
 
@@ -199,6 +210,7 @@ class WhatsAppService
     protected function logOnly(string $phone, string $message): bool
     {
         Log::info('WhatsApp message', ['to' => $phone, 'message' => $message]);
+
         return true;
     }
 }

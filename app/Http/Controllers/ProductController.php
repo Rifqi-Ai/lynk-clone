@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -16,6 +19,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $products = $request->user()->products()->latest()->paginate(20);
+
         return view('dashboard.products.index', compact('products'));
     }
 
@@ -27,11 +31,12 @@ class ProductController extends Controller
         $type = $request->query('type');
 
         // No type selected — show chooser
-        if (!$type || !array_key_exists($type, Product::TYPES)) {
+        if (! $type || ! array_key_exists($type, Product::TYPES)) {
             return view('dashboard.products.choose-type');
         }
 
         $product = new Product(['type' => $type]);
+
         return view('dashboard.products.create', [
             'product' => $product,
             'type' => $type,
@@ -40,30 +45,31 @@ class ProductController extends Controller
 
     /**
      * Store new product (any type).
+     * Rate limited per user: 20/hour (prevents DoS via spam creation).
      */
     public function store(Request $request): RedirectResponse
     {
+        $throttleKey = 'product-create:'.$request->user()->id;
+        if (RateLimiter::tooManyAttempts($throttleKey, 20)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            return back()->withErrors(['title' => "Too many products created. Try again in {$seconds}s."]);
+        }
+        RateLimiter::hit($throttleKey, 3600);
         $data = $this->validateProduct($request);
         $metadata = $this->extractMetadata($request);
 
-        $product = new Product();
+        $product = new Product;
         $product->user_id = Auth::id();
         $product->type = $data['type'];
         $product->title = $data['title'];
-        $product->slug = \Illuminate\Support\Str::slug($data['title']);
+        $product->slug = Str::slug($data['title']);
         $product->description = $data['description'] ?? null;
         $product->price = $data['price'];
         $product->compare_at_price = $data['compare_at_price'] ?? null;
         $product->status = $request->boolean('publish') ? 'published' : 'draft';
         $product->id = Product::generateId();
         $product->metadata = $metadata;
-
-        // Ensure slug uniqueness
-        $baseSlug = $product->slug;
-        $i = 1;
-        while (Product::where('user_id', Auth::id())->where('slug', $product->slug)->exists()) {
-            $product->slug = $baseSlug . '-' . $i++;
-        }
 
         // Handle thumbnail
         if ($request->hasFile('thumbnail')) {
@@ -81,9 +87,30 @@ class ProductController extends Controller
             $product->file_size = $file->getSize();
         }
 
-        $product->save();
+        // Ensure slug uniqueness per user — loop is best-effort; DB unique index is the safety net.
+        // Retry on unique constraint violation (handles race conditions between concurrent requests).
+        $baseSlug = $product->slug;
+        $attempts = 0;
+        $saved = false;
+        while ($attempts < 10) {
+            try {
+                $product->save();
+                $saved = true;
+                break;
+            } catch (QueryException $e) {
+                if ($e->errorInfo[1] !== 1062) {
+                    throw $e;
+                } // re-throw if not unique violation
+                $attempts++;
+                $product->slug = $baseSlug.'-'.$attempts;
+            }
+        }
+        if (! $saved) {
+            throw new \RuntimeException('Could not generate unique product slug after 10 attempts.');
+        }
 
         $route = $request->boolean('publish') ? 'dashboard.products.index' : 'dashboard.products.edit';
+
         return redirect()->route($route, $product)
             ->with('success', $product->isPublished() ? "{$product->typeLabel} published!" : "{$product->typeLabel} saved as draft.");
     }
@@ -94,6 +121,7 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         $this->authorize($product);
+
         return view('dashboard.products.edit', ['product' => $product, 'type' => $product->type]);
     }
 
@@ -116,7 +144,9 @@ class ProductController extends Controller
         ]);
 
         if ($request->hasFile('thumbnail')) {
-            if ($product->thumbnail_path) Storage::disk('public')->delete($product->thumbnail_path);
+            if ($product->thumbnail_path) {
+                Storage::disk('public')->delete($product->thumbnail_path);
+            }
             $product->thumbnail_path = $request->file('thumbnail')->store(
                 "products/{$product->user_id}/thumbnails", 'public'
             );
@@ -124,7 +154,9 @@ class ProductController extends Controller
 
         // Only handle file for digital/course types
         if (in_array($product->type, ['digital', 'course']) && $request->hasFile('file')) {
-            if ($product->file_path) Storage::disk('public')->delete($product->file_path);
+            if ($product->file_path) {
+                Storage::disk('public')->delete($product->file_path);
+            }
             $file = $request->file('file');
             $product->file_path = $file->store("products/{$product->user_id}/files", 'public');
             $product->file_name = $file->getClientOriginalName();
@@ -149,9 +181,14 @@ class ProductController extends Controller
     public function destroy(Product $product): RedirectResponse
     {
         $this->authorize($product);
-        if ($product->thumbnail_path) Storage::disk('public')->delete($product->thumbnail_path);
-        if ($product->file_path) Storage::disk('public')->delete($product->file_path);
+        if ($product->thumbnail_path) {
+            Storage::disk('public')->delete($product->thumbnail_path);
+        }
+        if ($product->file_path) {
+            Storage::disk('public')->delete($product->file_path);
+        }
         $product->delete();
+
         return redirect()->route('dashboard.products.index')->with('success', "{$product->typeLabel} deleted.");
     }
 
@@ -159,7 +196,8 @@ class ProductController extends Controller
 
     protected function validateProduct(Request $request, ?Product $product = null): array
     {
-        $typeRule = ['required', 'in:' . implode(',', array_keys(Product::TYPES))];
+        $typeRule = ['required', 'in:'.implode(',', array_keys(Product::TYPES))];
+
         return $request->validate([
             'type' => $typeRule,
             'title' => ['required', 'string', 'max:200'],
@@ -167,8 +205,14 @@ class ProductController extends Controller
             'price' => ['required', 'numeric', 'min:0', 'max:999999999'],
             'compare_at_price' => ['nullable', 'numeric', 'min:0', 'gt:price'],
             'download_limit_per_purchase' => ['nullable', 'integer', 'min:1', 'max:100'],
-            'thumbnail' => ['nullable', 'image', 'max:2048'],
-            'file' => ['nullable', 'file', 'max:51200'], // 50MB
+            // SECURITY: Restrict thumbnail to actual image MIME types + reasonable dims
+            'thumbnail' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=2000,max_height=2000'],
+            // SECURITY: Block executable MIME types for product files (digital/course).
+            // Allowed: pdf, zip, mp4, mp3, images, documents, ebooks. No php/exe/sh/htm.
+            'file' => ['nullable', 'file', 'max:51200', 'mimes:pdf,zip,mp4,mp3,m4a,mov,avi,wav,ogg,webm,jpg,jpeg,png,webp,gif,svg,doc,docx,xls,xlsx,ppt,pptx,txt,csv,epub,mobi'],
+        ], [
+            'file.mimes' => 'File type not allowed. Supported: PDF, ZIP, video, audio, images, docs, ebooks.',
+            'thumbnail.dimensions' => 'Thumbnail too large. Max 2000×2000 px.',
         ]);
     }
 

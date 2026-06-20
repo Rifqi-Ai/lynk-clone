@@ -12,35 +12,52 @@ class CourseController extends Controller
 {
     /**
      * Verify buyer has access to course via paid order.
-     * SECURITY: Only checks authenticated user's email or order that
-     * was created with their buyer_user_id — no ?email= query param.
+     * SECURITY: Tokens bind (order_id + buyer_email) — guessing only product_id is no longer enough.
+     * Authenticated users are matched by buyer_user_id OR buyer_email.
      */
     private function getAccessOrder(Request $request, Product $product): ?Order
     {
         $user = $request->user();
-        if (!$user) {
-            // Allow guest access only via signed URL token (passed as ?token=)
-            // The token is set when buyer accesses course from order success email
+        if (! $user) {
+            // Guest access via signed token: order_id + buyer_email both signed.
+            // Format: base64url(orderId|email) '.' hmac-sha256(orderId|email, app_key)
             $token = $request->query('token');
-            if (!$token) return null;
+            if (! $token) {
+                return null;
+            }
 
-            // Token format: base64(order_id + buyer_email_hash)
-            // For now, accept token as HMAC-signed value
-            $expected = hash_hmac('sha256', $product->id, config('app.key'));
-            if (!hash_equals($expected, $token)) return null;
+            $parts = explode('.', $token, 2);
+            if (count($parts) !== 2) {
+                return null;
+            }
+            [$payload, $signature] = $parts;
 
-            // Token grants access to ANY paid order for this product
-            // (intended for guest buyers who paid but don't have account)
-            return Order::where('product_id', $product->id)
+            $decoded = base64_decode(strtr($payload, '-_', '+/'), true);
+            if ($decoded === false || ! str_contains($decoded, '|')) {
+                return null;
+            }
+
+            [$orderId, $email] = explode('|', $decoded, 2);
+            $orderId = trim($orderId);
+            $email = strtolower(trim($email));
+
+            // Verify HMAC of (orderId + email + productId) so tokens don't cross products
+            $expected = hash_hmac('sha256', $orderId.'|'.$email.'|'.$product->id, config('app.key'));
+            if (! hash_equals($expected, $signature)) {
+                return null;
+            }
+
+            return Order::where('id', $orderId)
+                ->where('product_id', $product->id)
+                ->where('buyer_email', $email)
                 ->where('payment_status', 'paid')
-                ->latest()
                 ->first();
         }
 
         return Order::where('product_id', $product->id)
             ->where(function ($q) use ($user) {
                 $q->where('buyer_user_id', $user->id)
-                  ->orWhere('buyer_email', $user->email);
+                    ->orWhere('buyer_email', $user->email);
             })
             ->where('payment_status', 'paid')
             ->latest()
@@ -49,11 +66,15 @@ class CourseController extends Controller
 
     /**
      * Generate a signed access token for guest course buyers.
-     * Pass to URL via ?token= query param.
+     * Binds order_id + buyer_email + product_id so a token leaked for one course
+     * cannot be reused for another course, even by the same buyer.
      */
-    public static function generateAccessToken(string $productId): string
+    public static function generateAccessToken(Order $order): string
     {
-        return hash_hmac('sha256', $productId, config('app.key'));
+        $payload = base64_encode($order->id.'|'.strtolower($order->buyer_email));
+        $signature = hash_hmac('sha256', $order->id.'|'.strtolower($order->buyer_email).'|'.$order->product_id, config('app.key'));
+
+        return $payload.'.'.$signature;
     }
 
     /**
@@ -61,16 +82,18 @@ class CourseController extends Controller
      */
     public function show(Request $request, string $username, string $productId)
     {
-        $product = Product::with(['modules' => fn($q) => $q->where('is_published', true), 'owner'])
+        $product = Product::with(['modules' => fn ($q) => $q->where('is_published', true), 'owner'])
             ->where('id', $productId)
             ->where('type', 'course')
             ->firstOrFail();
 
         // Verify owner username matches
-        if ($product->owner->username !== $username) abort(404);
+        if ($product->owner->username !== $username) {
+            abort(404);
+        }
 
         $order = $this->getAccessOrder($request, $product);
-        if (!$order) {
+        if (! $order) {
             // No paid order — redirect to product page to purchase
             return redirect()->route('product.show', [$username, $productId])
                 ->with('error', 'Beli course ini dulu untuk akses penuh.');
@@ -103,10 +126,14 @@ class CourseController extends Controller
             ->where('type', 'course')
             ->firstOrFail();
 
-        if ($product->owner->username !== $username) abort(404);
+        if ($product->owner->username !== $username) {
+            abort(404);
+        }
 
         $order = $this->getAccessOrder($request, $product);
-        if (!$order) abort(403, 'Akses ditolak — purchase dulu.');
+        if (! $order) {
+            abort(403, 'Akses ditolak — purchase dulu.');
+        }
 
         $module = CourseModule::where('id', $moduleId)
             ->where('product_id', $product->id)
@@ -136,7 +163,9 @@ class CourseController extends Controller
             ->firstOrFail();
 
         $order = $this->getAccessOrder($request, $product);
-        if (!$order) abort(403);
+        if (! $order) {
+            abort(403);
+        }
 
         DB::table('course_progress')->updateOrInsert(
             ['order_id' => $order->id, 'module_id' => $moduleId, 'buyer_email' => $order->buyer_email],

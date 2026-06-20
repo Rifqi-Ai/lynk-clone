@@ -15,7 +15,7 @@ return new class extends Migration
 
             // type: digital (MVP), blog, appointment, course, event, donation, physical
             $table->enum('type', ['digital', 'blog', 'appointment', 'course', 'event', 'donation', 'physical'])
-                  ->default('digital');
+                ->default('digital');
 
             $table->string('title', 200);
             $table->string('slug', 200);

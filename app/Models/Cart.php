@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Cart extends Model
 {
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected function casts(): array
@@ -33,7 +34,7 @@ class Cart extends Model
                 for ($i = 0; $i < 8; $i++) {
                     $random .= $alphabet[random_int(0, 35)];
                 }
-                $cart->id = 'CART-' . $random;
+                $cart->id = 'CART-'.$random;
             }
             if (empty($cart->expires_at)) {
                 $cart->expires_at = now()->addDays(7);
@@ -67,7 +68,7 @@ class Cart extends Model
 
     public function getSubtotalAttribute(): float
     {
-        return (float) $this->items->sum(fn($i) => $i->unit_price * $i->quantity);
+        return (float) $this->items->sum(fn ($i) => $i->unit_price * $i->quantity);
     }
 
     public function getTotalAttribute(): float

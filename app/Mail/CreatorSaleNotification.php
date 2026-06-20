@@ -13,14 +13,12 @@ class CreatorSaleNotification extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public Order $order)
-    {
-    }
+    public function __construct(public Order $order) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "💰 New sale: {$this->order->product->title} — Rp " . number_format($this->order->total, 0, ',', '.'),
+            subject: "💰 New sale: {$this->order->product->title} — Rp ".number_format($this->order->total, 0, ',', '.'),
         );
     }
 

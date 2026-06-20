@@ -2,14 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\Product;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 class DashboardController extends Controller
 {
@@ -26,7 +23,7 @@ class DashboardController extends Controller
             'total_sales' => $user->ordersAsCreator()->where('payment_status', 'paid')->count(),
             'total_revenue' => $user->ordersAsCreator()->where('payment_status', 'paid')->sum('creator_payout'),
             'pending_orders' => $user->ordersAsCreator()->where('payment_status', 'pending')->count(),
-            'profile_views' => $user->products()->sum('view_count'),
+            'profile_views' => $user->products()->where('status', 'published')->sum('view_count'),
         ];
 
         // Last 30 days revenue chart (per day) — single query
@@ -34,7 +31,7 @@ class DashboardController extends Controller
         $dailyRevenue = $user->ordersAsCreator()
             ->where('payment_status', 'paid')
             ->where('paid_at', '>=', $startDate)
-            ->selectRaw("DATE(paid_at) as date, SUM(creator_payout) as amount, COUNT(*) as count")
+            ->selectRaw('DATE(paid_at) as date, SUM(creator_payout) as amount, COUNT(*) as count')
             ->groupBy('date')
             ->pluck('amount', 'date')
             ->toArray();
@@ -42,7 +39,7 @@ class DashboardController extends Controller
         $dailySales = $user->ordersAsCreator()
             ->where('payment_status', 'paid')
             ->where('paid_at', '>=', $startDate)
-            ->selectRaw("DATE(paid_at) as date, COUNT(*) as count")
+            ->selectRaw('DATE(paid_at) as date, COUNT(*) as count')
             ->groupBy('date')
             ->pluck('count', 'date')
             ->toArray();
@@ -65,24 +62,24 @@ class DashboardController extends Controller
 
         // Top 5 products by revenue
         $topProducts = $user->products()
-            ->withSum(['paidOrders' => fn($q) => $q->where('payment_status', 'paid')], 'creator_payout')
+            ->withSum(['paidOrders' => fn ($q) => $q->where('payment_status', 'paid')], 'creator_payout')
             ->orderByDesc('paid_orders_sum_creator_payout')
             ->limit(5)
             ->get();
 
         // Sales by product type
-        $salesByType = \App\Models\Order::where('creator_user_id', $user->id)
+        $salesByType = Order::where('creator_user_id', $user->id)
             ->where('payment_status', 'paid')
             ->join('products', 'orders.product_id', '=', 'products.id')
             ->selectRaw('products.type, COUNT(*) as count, SUM(orders.creator_payout) as revenue')
             ->groupBy('products.type')
             ->get()
-            ->map(fn($r) => [
+            ->map(fn ($r) => [
                 'type' => $r->type,
                 'count' => (int) $r->count,
                 'revenue' => (float) $r->revenue,
-                'label' => \App\Models\Product::TYPES[$r->type]['label'] ?? ucfirst($r->type),
-                'icon' => \App\Models\Product::TYPES[$r->type]['icon'] ?? '📦',
+                'label' => Product::TYPES[$r->type]['label'] ?? ucfirst($r->type),
+                'icon' => Product::TYPES[$r->type]['icon'] ?? '📦',
             ]);
 
         $recentProducts = $user->products()->latest()->limit(5)->get();
@@ -100,6 +97,7 @@ class DashboardController extends Controller
     public function editProfile(Request $request)
     {
         $user = $request->user();
+
         return view('dashboard.profile', compact('user'));
     }
 
@@ -123,10 +121,10 @@ class DashboardController extends Controller
         ]);
 
         // Normalize phone number
-        if (!empty($data['phone'])) {
+        if (! empty($data['phone'])) {
             $phone = preg_replace('/[^0-9]/', '', $data['phone']);
             if (str_starts_with($phone, '0')) {
-                $phone = '62' . substr($phone, 1);
+                $phone = '62'.substr($phone, 1);
             }
             $data['phone'] = $phone;
         }
@@ -134,7 +132,9 @@ class DashboardController extends Controller
         $data['whatsapp_opt_in'] = $request->boolean('whatsapp_opt_in');
 
         if ($request->hasFile('avatar')) {
-            if ($user->avatar_path) Storage::disk('public')->delete($user->avatar_path);
+            if ($user->avatar_path) {
+                Storage::disk('public')->delete($user->avatar_path);
+            }
             $data['avatar_path'] = $request->file('avatar')->store("avatars/{$user->id}", 'public');
         }
         unset($data['avatar']);

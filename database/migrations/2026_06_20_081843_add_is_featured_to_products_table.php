@@ -13,7 +13,7 @@ return new class extends Migration
         });
 
         // Mark Alice's best-selling product as featured
-        \DB::statement("
+        DB::statement("
             UPDATE products SET is_featured = 1
             WHERE id = (
                 SELECT id FROM (

@@ -33,6 +33,6 @@ class EventTicket extends Model
     public static function generateCode(): string
     {
         // Short human-friendly code like "TKT-A1B2C3"
-        return 'TKT-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
+        return 'TKT-'.strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
     }
 }

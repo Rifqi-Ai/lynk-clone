@@ -25,16 +25,22 @@ use Illuminate\Support\Str;
  *   - physical:   { stock_quantity, weight_grams, requires_shipping, dimensions }
  */
 #[Fillable([
-    'id', 'user_id', 'type', 'title', 'slug', 'description',
+    'user_id', 'type', 'title', 'slug', 'description',
     'price', 'compare_at_price', 'thumbnail_path',
     'file_path', 'file_name', 'file_size', 'download_limit_per_purchase',
-    'metadata', 'status', 'sales_count', 'view_count',
+    'status', 'sales_count', 'view_count', 'is_featured',
 ])]
+// NOTE: 'id' and 'metadata' are NOT in $fillable.
+// - 'id' is generated via Product::generateId() in creating hook (collision-safe).
+// - 'metadata' is NEVER mass-assigned. It must be set via ProductController::extractMetadata()
+//   which only ever copies whitelisted type-specific keys (no user-controlled keys can leak in).
+// This prevents attackers from injecting arbitrary JSON via POST fields like metadata[is_admin]=1.
 class Product extends Model
 {
     use HasFactory;
 
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     /** All 7 supported product types */
@@ -88,6 +94,7 @@ class Product extends Model
         for ($i = 0; $i < 12; $i++) {
             $id .= $alphabet[random_int(0, 35)];
         }
+
         return $id;
     }
 
@@ -125,12 +132,15 @@ class Product extends Model
         if ($this->thumbnail_path && \Storage::disk('public')->exists($this->thumbnail_path)) {
             return \Storage::disk('public')->url($this->thumbnail_path);
         }
+
         return null;
     }
 
     public function getFileSizeFormattedAttribute(): ?string
     {
-        if (!$this->file_size) return null;
+        if (! $this->file_size) {
+            return null;
+        }
         $units = ['B', 'KB', 'MB', 'GB'];
         $size = $this->file_size;
         $i = 0;
@@ -138,7 +148,8 @@ class Product extends Model
             $size /= 1024;
             $i++;
         }
-        return round($size, 2) . ' ' . $units[$i];
+
+        return round($size, 2).' '.$units[$i];
     }
 
     public function getHasDiscountAttribute(): bool
@@ -148,7 +159,10 @@ class Product extends Model
 
     public function getDiscountPercentageAttribute(): int
     {
-        if (!$this->has_discount) return 0;
+        if (! $this->has_discount) {
+            return 0;
+        }
+
         return (int) round((($this->compare_at_price - $this->price) / $this->compare_at_price) * 100);
     }
 
@@ -218,8 +232,13 @@ class Product extends Model
         $mins = $this->duration_minutes;
         $hours = intdiv($mins, 60);
         $m = $mins % 60;
-        if ($hours > 0 && $m > 0) return "{$hours}h {$m}m";
-        if ($hours > 0) return "{$hours}h";
+        if ($hours > 0 && $m > 0) {
+            return "{$hours}h {$m}m";
+        }
+        if ($hours > 0) {
+            return "{$hours}h";
+        }
+
         return "{$m}m";
     }
 
@@ -263,6 +282,7 @@ class Product extends Model
     public function getInStockAttribute(): bool
     {
         $stock = $this->stock_quantity;
+
         return $stock === null || $stock > 0;
     }
 }

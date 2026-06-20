@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,7 +18,7 @@ class FulfillmentController extends Controller
 
         $orders = Order::where('creator_user_id', $user->id)
             ->where('payment_status', 'paid')
-            ->whereHas('product', fn($q) => $q->where('type', 'physical'))
+            ->whereHas('product', fn ($q) => $q->where('type', 'physical'))
             ->with('product')
             ->orderByRaw("JSON_EXTRACT(metadata, '$.shipping_status') ASC")
             ->orderBy('paid_at', 'desc')
@@ -28,22 +27,22 @@ class FulfillmentController extends Controller
         $stats = [
             'pending' => Order::where('creator_user_id', $user->id)
                 ->where('payment_status', 'paid')
-                ->whereHas('product', fn($q) => $q->where('type', 'physical'))
+                ->whereHas('product', fn ($q) => $q->where('type', 'physical'))
                 ->whereJsonContains('metadata->shipping_status', 'pending')
                 ->count(),
             'packed' => Order::where('creator_user_id', $user->id)
                 ->where('payment_status', 'paid')
-                ->whereHas('product', fn($q) => $q->where('type', 'physical'))
+                ->whereHas('product', fn ($q) => $q->where('type', 'physical'))
                 ->whereJsonContains('metadata->shipping_status', 'packed')
                 ->count(),
             'shipped' => Order::where('creator_user_id', $user->id)
                 ->where('payment_status', 'paid')
-                ->whereHas('product', fn($q) => $q->where('type', 'physical'))
+                ->whereHas('product', fn ($q) => $q->where('type', 'physical'))
                 ->whereJsonContains('metadata->shipping_status', 'shipped')
                 ->count(),
             'delivered' => Order::where('creator_user_id', $user->id)
                 ->where('payment_status', 'paid')
-                ->whereHas('product', fn($q) => $q->where('type', 'physical'))
+                ->whereHas('product', fn ($q) => $q->where('type', 'physical'))
                 ->whereJsonContains('metadata->shipping_status', 'delivered')
                 ->count(),
         ];
@@ -74,7 +73,7 @@ class FulfillmentController extends Controller
         $order = Order::where('creator_user_id', $user->id)
             ->where('id', $orderId)
             ->where('payment_status', 'paid')
-            ->whereHas('product', fn($q) => $q->where('type', 'physical'))
+            ->whereHas('product', fn ($q) => $q->where('type', 'physical'))
             ->firstOrFail();
 
         $data = $request->validate([
@@ -99,6 +98,6 @@ class FulfillmentController extends Controller
 
         $order->update(['metadata' => $metadata]);
 
-        return back()->with('success', "✅ Status pengiriman diupdate: " . strtoupper($data['shipping_status']));
+        return back()->with('success', '✅ Status pengiriman diupdate: '.strtoupper($data['shipping_status']));
     }
 }

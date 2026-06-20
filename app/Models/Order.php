@@ -3,20 +3,26 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
-    'id', 'buyer_user_id', 'buyer_email', 'product_id', 'creator_user_id',
+    'id', // generated via Order::generateId() in creating hook
+    'buyer_user_id', 'buyer_email', 'product_id', 'creator_user_id',
     'unit_price', 'quantity', 'subtotal', 'fee_pct', 'fee_amount', 'total', 'creator_payout',
     'voucher_code', 'voucher_discount', 'metadata',
-    'payment_status', 'payment_method',
-    'duitku_reference', 'duitku_invoice_id', 'duitku_response',
-    'paid_at', 'expired_at',
+    'expired_at',
+    // payment_status, paid_at, duitku_* are deliberately NOT fillable — only PaymentCallbackController
+    // (signature-verified) and Order state machine methods can mutate these. Prevents attackers
+    // from POSTing payment_status=paid to mark their own orders as paid.
 ])]
 class Order extends Model
 {
+    use HasFactory;
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected function casts(): array
@@ -52,13 +58,14 @@ class Order extends Model
      */
     public static function generateId(): string
     {
-        $prefix = 'ORD-' . now()->format('Ymd') . '-';
+        $prefix = 'ORD-'.now()->format('Ymd').'-';
         $alphabet = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // no I, O for clarity
         $random = '';
         for ($i = 0; $i < 8; $i++) {
             $random .= $alphabet[random_int(0, 33)];
         }
-        return $prefix . $random;
+
+        return $prefix.$random;
     }
 
     // ───── Relationships ─────
@@ -98,6 +105,6 @@ class Order extends Model
 
     public function getFormattedTotalAttribute(): string
     {
-        return 'Rp ' . number_format($this->total, 0, ',', '.');
+        return 'Rp '.number_format($this->total, 0, ',', '.');
     }
 }

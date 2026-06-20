@@ -20,7 +20,9 @@ class EventController extends Controller
             ->where('type', 'event')
             ->firstOrFail();
 
-        if ($product->owner->username !== $username) abort(404);
+        if ($product->owner->username !== $username) {
+            abort(404);
+        }
 
         $order = Order::where('id', $orderId)
             ->where('product_id', $productId)
@@ -28,7 +30,7 @@ class EventController extends Controller
             ->firstOrFail();
 
         $ticket = EventTicket::where('order_id', $orderId)->first();
-        if (!$ticket) {
+        if (! $ticket) {
             // Generate one if missing (shouldn't normally happen, but safety net)
             $ticket = EventTicket::create([
                 'order_id' => $order->id,
@@ -47,7 +49,9 @@ class EventController extends Controller
     public function checkinDashboard(Request $request, string $username, string $productId)
     {
         $user = Auth::user();
-        if (!$user || $user->username !== $username) abort(403);
+        if (! $user || $user->username !== $username) {
+            abort(403);
+        }
 
         $product = Product::where('id', $productId)
             ->where('user_id', $user->id)
@@ -75,7 +79,9 @@ class EventController extends Controller
     public function checkin(Request $request, string $username, string $productId)
     {
         $user = Auth::user();
-        if (!$user || $user->username !== $username) abort(403);
+        if (! $user || $user->username !== $username) {
+            abort(403);
+        }
 
         $product = Product::where('id', $productId)
             ->where('user_id', $user->id)
@@ -90,7 +96,7 @@ class EventController extends Controller
             ->where('ticket_code', $validated['ticket_code'])
             ->first();
 
-        if (!$ticket) {
+        if (! $ticket) {
             return back()->with('error', '❌ Tiket tidak ditemukan untuk event ini.');
         }
 
@@ -104,7 +110,7 @@ class EventController extends Controller
             'checked_in_by' => $user->name,
         ]);
 
-        return back()->with('success', "✅ Tiket {$ticket->ticket_code} berhasil check-in! Attendee: " . ($ticket->attendee_name ?? $ticket->buyer_email));
+        return back()->with('success', "✅ Tiket {$ticket->ticket_code} berhasil check-in! Attendee: ".($ticket->attendee_name ?? $ticket->buyer_email));
     }
 
     /**
@@ -113,7 +119,9 @@ class EventController extends Controller
     public function createWalkin(Request $request, string $username, string $productId)
     {
         $user = Auth::user();
-        if (!$user || $user->username !== $username) abort(403);
+        if (! $user || $user->username !== $username) {
+            abort(403);
+        }
 
         $product = Product::where('id', $productId)
             ->where('user_id', $user->id)
@@ -144,11 +152,13 @@ class EventController extends Controller
             'fee_amount' => $fee,
             'total' => $total,
             'creator_payout' => $payout,
-            'payment_status' => 'paid',
-            'payment_method' => 'offline_cash',
-            'paid_at' => now(),
             'metadata' => ['attendee_name' => $validated['attendee_name'], 'walk_in' => true],
         ]);
+        // payment_status, payment_method, paid_at not fillable — set directly (creator-only flow).
+        $order->payment_status = 'paid';
+        $order->payment_method = 'offline_cash';
+        $order->paid_at = now();
+        $order->save();
 
         EventTicket::create([
             'order_id' => $order->id,

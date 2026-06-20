@@ -22,10 +22,15 @@ use Illuminate\Support\Facades\Log;
 class DuitkuService
 {
     protected string $apiKey;
+
     protected string $merchantCode;
+
     protected bool $production;
+
     protected string $baseUrl;
+
     protected string $callbackUrl;
+
     protected string $returnUrl;
 
     public function __construct()
@@ -46,7 +51,7 @@ class DuitkuService
     public function createTransaction(Order $order, Product $product, User $creator, string $payerEmail): string
     {
         // Dev mode: return mock URL for testing
-        if (!$this->production) {
+        if (! $this->production) {
             return $this->mockPaymentUrl($order);
         }
 
@@ -82,19 +87,19 @@ class DuitkuService
 
         $response = Http::post("{$this->baseUrl}/createInvoice", $payload);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Duitku createInvoice failed', [
                 'order_id' => $order->id,
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            throw new \RuntimeException('Duitku API error: ' . $response->body());
+            throw new \RuntimeException('Duitku API error: '.$response->body());
         }
 
         $data = $response->json();
 
-        if (!isset($data['paymentUrl'])) {
-            throw new \RuntimeException('Duitku response missing paymentUrl: ' . json_encode($data));
+        if (! isset($data['paymentUrl'])) {
+            throw new \RuntimeException('Duitku response missing paymentUrl: '.json_encode($data));
         }
 
         // Save reference
@@ -113,15 +118,18 @@ class DuitkuService
     public function verifyCallback(array $payload): bool
     {
         $signature = $payload['signature'] ?? null;
-        if (!$signature) return false;
+        if (! $signature) {
+            return false;
+        }
 
-        $expected = hash('sha256', $this->merchantCode . ($payload['amount'] ?? '') . ($payload['merchantOrderId'] ?? '') . $this->apiKey);
+        $expected = hash('sha256', $this->merchantCode.($payload['amount'] ?? '').($payload['merchantOrderId'] ?? '').$this->apiKey);
+
         return hash_equals($expected, $signature);
     }
 
     protected function generateSignature(int $amount, string $orderId): string
     {
-        return hash('sha256', $this->merchantCode . $amount . $orderId . $this->apiKey);
+        return hash('sha256', $this->merchantCode.$amount.$orderId.$this->apiKey);
     }
 
     protected function detectPaymentMethod(): string
@@ -136,6 +144,6 @@ class DuitkuService
     protected function mockPaymentUrl(Order $order): string
     {
         // For MVP dev: redirect to a mock payment page
-        return route('payment.success', $order) . '?mock=1';
+        return route('payment.success', $order).'?mock=1';
     }
 }
