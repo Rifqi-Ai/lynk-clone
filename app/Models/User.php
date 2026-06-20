@@ -94,6 +94,41 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the display name (real name or @username fallback).
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->name ?: '@'.$this->username;
+    }
+
+    /**
+     * Check if user is verified (creator badge).
+     */
+    public function getIsVerifiedAttribute(): bool
+    {
+        return (bool) $this->verified;
+    }
+
+    /**
+     * Get follower count. MVP: no followers table yet, always 0.
+     * Real impl when social features added.
+     */
+    public function getFollowersCountAttribute(): int
+    {
+        return 0;
+    }
+
+    /**
+     * Get total count of paid sales (orders as creator with payment_status = 'paid').
+     */
+    public function getTotalSalesCountAttribute(): int
+    {
+        return $this->ordersAsCreator()
+            ->where('payment_status', 'paid')
+            ->count();
+    }
+
+    /**
      * Check if user can publish products (always true for MVP; quota checks come later).
      */
     public function canPublishMoreProducts(): bool
