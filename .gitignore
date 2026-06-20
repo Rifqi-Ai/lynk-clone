@@ -1,0 +1,69 @@
+# Dependencies
+/vendor
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Build outputs
+/public/build
+/public/hot
+/public/storage
+/public/fonts-manifest.dev.json
+/storage/*.key
+/storage/pail
+
+# Local env files
+.env
+.env.backup
+.env.production
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+/storage/logs/*.log
+
+# IDE
+.idea
+.vscode
+.cursor/
+.codex/
+.zed/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# PHP
+.phpunit.result.cache
+.phpunit.cache
+_ide_helper.php
+_ide_helper_models.php
+Homestead.json
+Homestead.yaml
+auth.json
+
+# Local database (dev only — uncomment to commit)
+# /database/database.sqlite
+/storage/framework/cache/data
+/storage/framework/sessions
+/storage/framework/views
+/storage/debugbar
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Temporary files
+*.tmp
+*.bak
+*.orig
+*~
