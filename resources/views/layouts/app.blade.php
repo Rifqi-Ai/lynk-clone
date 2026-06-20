@@ -155,7 +155,7 @@
                     <p class="text-sm text-ink-500 leading-relaxed">Powering the Indonesian creator economy. Satu link, jual apapun.</p>
                 </div>
                 <div>
-                    <h4 class="text-sm font-bold text-ink-900 mb-3">Product</h4>
+                    <h3 class="text-sm font-bold text-ink-900 mb-3">Product</h3>
                     <ul class="space-y-2 text-sm text-ink-500">
                         <li><a href="{{ route('home') }}#features" class="hover:text-brand-600 transition-colors">Features</a></li>
                         <li><a href="{{ route('pricing') }}" class="hover:text-brand-600 transition-colors">Pricing</a></li>
@@ -163,7 +163,7 @@
                     </ul>
                 </div>
                 <div>
-                    <h4 class="text-sm font-bold text-ink-900 mb-3">Company</h4>
+                    <h3 class="text-sm font-bold text-ink-900 mb-3">Company</h3>
                     <ul class="space-y-2 text-sm text-ink-500">
                         <li><a href="{{ route('about') }}" class="hover:text-brand-600 transition-colors">About</a></li>
                         <li><a href="{{ route('terms') }}" class="hover:text-brand-600 transition-colors">Terms</a></li>
@@ -171,7 +171,7 @@
                     </ul>
                 </div>
                 <div>
-                    <h4 class="text-sm font-bold text-ink-900 mb-3">Get Started</h4>
+                    <h3 class="text-sm font-bold text-ink-900 mb-3">Get Started</h3>
                     <ul class="space-y-2 text-sm text-ink-500">
                         <li><a href="{{ route('register') }}" class="hover:text-brand-600 transition-colors">Sign up free</a></li>
                         <li><a href="{{ route('login') }}" class="hover:text-brand-600 transition-colors">Sign in</a></li>

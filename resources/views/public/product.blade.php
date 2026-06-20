@@ -224,7 +224,7 @@
                     <div class="flex items-center gap-4">
                         <div class="relative w-14 h-14 flex-shrink-0">
                             <div class="w-14 h-14 rounded-full p-0.5 bg-gradient-to-br from-brand-400 to-brand-700">
-                                <img src="{{ $creator->avatar_url }}" class="w-full h-full rounded-full object-cover ring-2 ring-white">
+                                <img src="{{ $creator->avatar_url }}" alt="{{ '@' . $creator->username }}" class="w-full h-full rounded-full object-cover ring-2 ring-white">
                             </div>
                         </div>
                         <div class="flex-1 min-w-0">
@@ -244,7 +244,7 @@
                     {{-- Price + buy card --}}
                     <div class="bg-white rounded-2xl border border-ink-200 p-6 shadow-card">
                         {{-- Title (desktop only) --}}
-                        <h1 class="hidden lg:block text-2xl font-bold text-ink-900 tracking-tight text-balance">{{ $product->title }}</h1>
+                        <div class="hidden lg:block text-2xl font-bold text-ink-900 tracking-tight text-balance">{{ $product->title }}</div>
 
                         {{-- Price --}}
                         <div class="mt-4 flex items-baseline gap-2 flex-wrap">
