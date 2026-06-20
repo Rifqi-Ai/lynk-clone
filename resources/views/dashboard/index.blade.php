@@ -269,7 +269,7 @@
                 <ol class="mt-4 space-y-2.5">
                     <li class="flex items-start gap-3">
                         <span class="flex-shrink-0 w-6 h-6 rounded-full bg-white border-2 border-brand-300 text-brand-700 font-bold text-xs flex items-center justify-center">1</span>
-                        <span class="text-sm text-ink-700"><a href="{{ route('dashboard.profile') }}" class="font-semibold text-brand-700 hover:underline">Lengkapi profil</a> kamu (bio, avatar, sosial)</span>
+                        <span class="text-sm text-ink-700"><a href="{{ route('settings.profile') }}" class="font-semibold text-brand-700 hover:underline">Lengkapi profil</a> kamu (bio, avatar, sosial)</span>
                     </li>
                     <li class="flex items-start gap-3">
                         <span class="flex-shrink-0 w-6 h-6 rounded-full bg-white border-2 border-brand-300 text-brand-700 font-bold text-xs flex items-center justify-center">2</span>
