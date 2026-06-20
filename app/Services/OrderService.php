@@ -23,6 +23,9 @@ class OrderService
     /** Maximum transaction fee (defends against compromised creator accounts setting 9999%) */
     public const MAX_FEE_PCT = 50;
 
+    /** Maximum flat shipping cost (defends against product metadata abuse) */
+    public const MAX_SHIPPING_COST = 100000; // Rp 100K cap
+
     /** Minimum transaction fee (never negative) */
     public const MIN_FEE_PCT = 0;
 
@@ -156,7 +159,10 @@ class OrderService
         }
 
         $subtotal = $unitPrice * $quantity;
-        $shippingCost = $product->type === 'physical' ? 15000 : 0; // flat Rp 15K (TODO: real calc)
+        // MVP: flat shipping. Future: integrate RajaOngkir API when real rates are needed.
+        $shippingCost = $product->type === 'physical' ? 15000 : 0;
+        // Cap to prevent abuse if any code path allows user-controlled shipping values
+        $shippingCost = min($shippingCost, self::MAX_SHIPPING_COST);
 
         $totalBeforeVoucher = $subtotal + $shippingCost;
         $total = max(0, $totalBeforeVoucher - $voucherDiscount);
