@@ -60,6 +60,23 @@ class PublicProfileController extends Controller
             $product->incrementQuietly('view_count');
         }
 
+        // Featured product (only if NOT searching/filtering) — most popular or first
+        $featured = null;
+        if (!$typeFilter && !$search) {
+            $featured = $creator->products()
+                ->where('status', 'published')
+                ->where('is_featured', true)
+                ->first()
+                ?? $creator->products()
+                    ->where('status', 'published')
+                    ->orderByDesc('sales_count')
+                    ->first();
+            // Exclude featured from the grid below
+            if ($featured) {
+                $products = $products->where('id', '!=', $featured->id)->values();
+            }
+        }
+
         // Counts per type (for filter UI)
         $typeCounts = $creator->products()
             ->where('status', 'published')
@@ -68,7 +85,7 @@ class PublicProfileController extends Controller
             ->pluck('count', 'type')
             ->toArray();
 
-        return view('public.profile', compact('creator', 'products', 'typeCounts', 'typeFilter', 'search', 'sort'));
+        return view('public.profile', compact('creator', 'products', 'featured', 'typeCounts', 'typeFilter', 'search', 'sort'));
     }
 
     /**
