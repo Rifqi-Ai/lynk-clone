@@ -2,14 +2,26 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EventTicket extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'order_id', 'product_id', 'buyer_email', 'attendee_name',
         'ticket_code', 'is_checked_in', 'checked_in_at', 'checked_in_by',
+    ];
+
+    /**
+     * Sensitive fields hidden from default JSON serialization.
+     * ticket_code is the private check-in token — only owner/event-host should see it.
+     * Use $model->makeVisible('ticket_code') on the route that needs to show it.
+     */
+    protected $hidden = [
+        'ticket_code',
     ];
 
     protected function casts(): array

@@ -15,6 +15,14 @@ class CourseModule extends Model
         'duration_minutes', 'position', 'is_free_preview', 'is_published',
     ];
 
+    /**
+     * Fields hidden from default JSON serialization.
+     * Video URL only revealed to enrolled students; draft modules never leak.
+     */
+    protected $hidden = [
+        'video_url',
+    ];
+
     protected function casts(): array
     {
         return [
