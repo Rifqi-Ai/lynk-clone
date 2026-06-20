@@ -17,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'payment/callback',
             'payment/*/callback',
         ]);
+
+        // Add security headers (X-Frame-Options, X-Content-Type-Options, etc.)
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
