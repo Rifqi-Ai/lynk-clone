@@ -294,4 +294,29 @@ class Product extends Model
 
         return $stock === null || $stock > 0;
     }
+
+    /** Blog: estimated reading time in minutes (avg 200 words/min, min 1) */
+    public function getReadTimeAttribute(): int
+    {
+        $body = $this->meta('body_markdown', '');
+        $wordCount = str_word_count(strip_tags($body));
+
+        return max(1, (int) ceil($wordCount / 200));
+    }
+
+    /** Digital: public URL to download file */
+    public function getFileUrlAttribute(): ?string
+    {
+        if (! $this->file_path) {
+            return null;
+        }
+
+        return \Storage::disk('public')->url($this->file_path);
+    }
+
+    /** Physical: whether inventory is tracked (default true for safety) */
+    public function getTrackInventoryAttribute(): bool
+    {
+        return (bool) $this->meta('track_inventory', true);
+    }
 }
