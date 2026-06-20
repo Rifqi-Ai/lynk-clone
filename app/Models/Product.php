@@ -127,6 +127,15 @@ class Product extends Model
         return url("/{$this->owner->username}/{$this->id}");
     }
 
+    /**
+     * Get the checkout URL for this product.
+     * Routes customer to {username}/{productId}/checkout where they enter payment details.
+     */
+    public function getCheckoutUrlAttribute(): string
+    {
+        return url("/{$this->owner->username}/{$this->id}/checkout");
+    }
+
     public function getThumbnailUrlAttribute(): ?string
     {
         if ($this->thumbnail_path && \Storage::disk('public')->exists($this->thumbnail_path)) {
