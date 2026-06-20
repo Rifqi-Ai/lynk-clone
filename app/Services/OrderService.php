@@ -91,7 +91,7 @@ class OrderService
      */
     public function createCartOrder(
         User $creator,
-        User $buyer,
+        ?User $buyer,
         $items,
         string $payerEmail,
         ?string $voucherCode,

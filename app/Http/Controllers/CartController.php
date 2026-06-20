@@ -18,6 +18,15 @@ use Illuminate\Support\Facades\Log;
 
 class CartController extends Controller
 {
+    /** Cookie lifetime for cart_id (7 days, in minutes). */
+    private const CART_COOKIE_MINUTES = 60 * 24 * 7;
+
+    /**
+     * Cookie name pattern: 'cart_id_{creator_id}'.
+     * Cart IDs are stored under a creator-scoped key to prevent cross-creator cart collisions.
+     */
+    private const CART_COOKIE_PREFIX = 'cart_id_';
+
     /**
      * Show cart page for a creator.
      */
@@ -182,8 +191,10 @@ class CartController extends Controller
 
     /**
      * Process cart checkout — creates single order with all items via OrderService.
-     * Refactored in Phase 9: business logic moved to App\Services\OrderService.
      * Rate limit handled by 'throttle:cart-checkout' middleware in routes/web.php.
+     *
+     * Reads like prose: resolve → guard empty → validate → persist email →
+     * resolve primary product → create order (or fail) → initiate payment.
      */
     public function processCheckout(
         Request $request,
@@ -195,37 +206,86 @@ class CartController extends Controller
         $cart = $this->getOrCreateCart($request, $creator);
 
         if ($cart->items->isEmpty()) {
-            return redirect()->route('cart.show', $creator->username)
-                ->with('error', 'Your cart is empty.');
+            return $this->emptyCartRedirect($creator);
         }
 
-        $data = $request->validate([
-            'payer_email' => ['required', 'email'],
-        ]);
-
-        // Save buyer email to cart for re-use
+        $data = $this->validateCheckoutRequest($request);
         $cart->update(['buyer_email' => $data['payer_email']]);
-
-        // Load products (with eager loading to avoid N+1)
         $cart->load(['items.product', 'voucher']);
 
-        // Validate that at least one product still exists and is published.
-        // (Avoid crashes if a product was deleted/unpublished between add-to-cart and checkout.)
+        $primaryProductOrError = $this->resolvePrimaryProduct($cart);
+        if ($primaryProductOrError instanceof RedirectResponse) {
+            return $primaryProductOrError;
+        }
+        $primaryProduct = $primaryProductOrError;
+
+        $orderOrError = $this->createOrderInTransaction(
+            $orders, $cart, $creator, $data['payer_email']
+        );
+        if ($orderOrError instanceof RedirectResponse) {
+            return $orderOrError;
+        }
+        $order = $orderOrError;
+
+        return $this->initiatePaymentOrFail(
+            $duitku, $order, $primaryProduct, $creator, $data['payer_email']
+        );
+    }
+
+    // ───── processCheckout() helpers ─────
+
+    /**
+     * Redirect back to cart with an "empty cart" error.
+     */
+    private function emptyCartRedirect(User $creator): RedirectResponse
+    {
+        return redirect()->route('cart.show', $creator->username)
+            ->with('error', 'Your cart is empty.');
+    }
+
+    /**
+     * Validate the checkout form. Returns the validated payload.
+     */
+    private function validateCheckoutRequest(Request $request): array
+    {
+        return $request->validate([
+            'payer_email' => ['required', 'email'],
+        ]);
+    }
+
+    /**
+     * Return the primary product for the order, or a RedirectResponse
+     * if the cart contains no longer available items.
+     */
+    private function resolvePrimaryProduct(Cart $cart): Product|RedirectResponse
+    {
         $primaryItem = $cart->items->first();
         if (! $primaryItem || ! $primaryItem->product || ! $primaryItem->product->isPublished()) {
-            return back()->withErrors(['payer_email' => 'One or more products in your cart are no longer available.']);
+            return back()->withErrors([
+                'payer_email' => 'One or more products in your cart are no longer available.',
+            ]);
         }
-        $primaryProduct = $primaryItem->product;
 
-        // OrderService handles all the business logic — wrapped in a single transaction
-        // so cart clear and order creation are atomic.
+        return $primaryItem->product;
+    }
+
+    /**
+     * Create the order in a DB transaction (cart clear + order creation atomic).
+     * Returns Order on success, or RedirectResponse on failure (logged + user-facing error).
+     */
+    private function createOrderInTransaction(
+        OrderService $orders,
+        Cart $cart,
+        User $creator,
+        string $payerEmail
+    ): Order|RedirectResponse {
         try {
-            $order = DB::transaction(function () use ($orders, $cart, $creator, $data) {
+            return DB::transaction(function () use ($orders, $cart, $creator, $payerEmail) {
                 $order = $orders->createCartOrder(
                     creator: $creator,
                     buyer: Auth::user(),
                     items: $cart->items,
-                    payerEmail: $data['payer_email'],
+                    payerEmail: $payerEmail,
                     voucherCode: $cart->voucher?->code,
                     voucherDiscount: $cart->voucher_discount ?? 0,
                 );
@@ -245,36 +305,61 @@ class CartController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return back()->withErrors(['payer_email' => 'Could not create order. Please try again.']);
+            return back()->withErrors([
+                'payer_email' => 'Could not create order. Please try again.',
+            ]);
         }
+    }
 
-        // Initialize Duitku payment (outside the DB transaction — payment is a remote call)
+    /**
+     * Initiate the Duitku payment. On gateway failure, mark the order as failed
+     * and return a user-facing error response.
+     */
+    private function initiatePaymentOrFail(
+        DuitkuService $duitku,
+        Order $order,
+        Product $primaryProduct,
+        User $creator,
+        string $payerEmail
+    ): RedirectResponse {
         try {
-            $paymentUrl = $duitku->createTransaction($order, $primaryProduct, $creator, $data['payer_email']);
+            $paymentUrl = $duitku->createTransaction($order, $primaryProduct, $creator, $payerEmail);
 
             return redirect()->away($paymentUrl);
         } catch (\Exception $e) {
-            Log::error('Duitku cart init failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            Log::error('Duitku cart init failed', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
             $order->payment_status = 'failed';
             $order->save();
 
-            return back()->withErrors(['payer_email' => 'Payment gateway error. Please try again.']);
+            return back()->withErrors([
+                'payer_email' => 'Payment gateway error. Please try again.',
+            ]);
         }
     }
+
+    // ───── getOrCreateCart ─────
 
     /**
      * Get or create cart for current session/user.
      * Strategy: use session ID as key, store in cookie + session.
      *
-     * SECURITY: cart_id cookie is validated as UUID — prevents attackers from injecting
-     * arbitrary strings or claiming another user's cart by setting the cookie.
+     * SECURITY: cart_id cookie is validated against the Cart ID format
+     * (`CART-XXXXXXXX` where X is uppercase alphanumeric) before querying DB —
+     * prevents attackers from injecting arbitrary strings or claiming another
+     * user's cart by setting the cookie.
      */
     protected function getOrCreateCart(Request $request, User $creator): Cart
     {
-        $cartId = $request->cookie('cart_id_'.$creator->id);
+        $cartId = $request->cookie(self::CART_COOKIE_PREFIX.$creator->id);
 
-        // Validate format BEFORE querying DB (UUID v4 has fixed length + hyphen positions)
-        if ($cartId && preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i', $cartId)) {
+        // BUG FIX: Cart IDs use 'CART-' + 8 uppercase alphanumeric chars,
+        // NOT UUID. The previous regex required UUID format, which made
+        // every existing cart cookie unrecognizable — users were always
+        // getting new empty carts and could never complete checkout.
+        if ($cartId && preg_match('/^CART-[A-Z0-9]{8}$/', $cartId)) {
             $cart = Cart::where('id', $cartId)
                 ->where('creator_user_id', $creator->id)
                 ->where('expires_at', '>', now())
@@ -297,7 +382,11 @@ class CartController extends Controller
         ]);
 
         // Store cart ID in cookie for 7 days
-        cookie()->queue(cookie('cart_id_'.$creator->id, $cart->id, 60 * 24 * 7));
+        cookie()->queue(cookie(
+            self::CART_COOKIE_PREFIX.$creator->id,
+            $cart->id,
+            self::CART_COOKIE_MINUTES
+        ));
 
         return $cart;
     }
