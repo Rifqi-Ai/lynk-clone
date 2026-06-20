@@ -215,6 +215,12 @@ body {
   letter-spacing: -0.011em;
 }
 
+/* Emoji font fallback — ensures emoji render on all platforms */
+.emoji,
+p, li, span, h1, h2, h3, h4, h5, h6, button, a {
+  font-family: var(--font-sans), 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', 'Twemoji Mozilla', sans-serif;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   letter-spacing: -0.025em;

@@ -31,6 +31,10 @@
     {{-- Vite assets --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    {{-- Noto Color Emoji fallback (for cross-platform emoji rendering) --}}
+    <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+    <link rel="stylesheet" href="https://fonts.bunny.net/css?family=noto-color-emoji:400" media="all">
+
     {{-- Page-specific head --}}
     @stack('head')
 </head>

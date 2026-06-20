@@ -119,12 +119,16 @@
                 {{-- Type filter pills --}}
                 @if (!empty($typeCounts) && count($typeCounts) > 1)
                     <div class="flex flex-wrap gap-1.5 -mx-1 px-1 pb-1 overflow-x-auto scrollbar-hide">
+                        @php
+                            // Compute type counts from ACTUALLY displayed products (excludes featured)
+                            $displayedTypeCounts = $products->groupBy('type')->map->count()->toArray();
+                        @endphp
                         <a href="{{ $creator->profile_url . ($search ? '?q=' . urlencode($search) : '') }}"
                            class="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all {{ !$typeFilter ? 'bg-brand-500 text-white shadow-sm' : 'bg-ink-100 text-ink-700 hover:bg-ink-200' }}">
-                            All ({{ array_sum($typeCounts) }})
+                            All ({{ $products->count() }})
                         </a>
                         @foreach (\App\Models\Product::TYPES as $key => $info)
-                            @if (!empty($typeCounts[$key]))
+                            @if (!empty($displayedTypeCounts[$key]))
                                 <a href="{{ $creator->profile_url . '?type=' . $key . ($search ? '&q=' . urlencode($search) : '') }}"
                                    class="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all {{ $typeFilter === $key ? 'bg-brand-500 text-white shadow-sm' : 'bg-ink-100 text-ink-700 hover:bg-ink-200' }}">
                                     {{ $info['label'] }} ({{ $typeCounts[$key] }})
@@ -294,20 +298,18 @@
             </div>
         @endif
 
-        {{-- ─── Floating action: share button --}}
-        <div class="mt-8 flex justify-center">
-            <button onclick="navigator.share ? navigator.share({title: '{{ '@' . $creator->username }}', url: window.location.href}).catch(() => copyLink()) : copyLink()"
-                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-ink-200 hover:border-brand-300 hover:bg-brand-50 text-ink-700 hover:text-brand-700 text-sm font-semibold rounded-full shadow-sm hover:shadow transition-all duration-150">
-                <x-heroicon-o-share class="w-4 h-4" />
-                <span>Bagikan</span>
-            </button>
-        </div>
+        {{-- ─── Floating action: share button (actual FAB) --}}
+        <button onclick="navigator.share ? navigator.share({title: '{{ '@' . $creator->username }}', url: window.location.href}).catch(() => copyLink()) : copyLink()"
+                class="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 px-5 py-3 bg-ink-900 hover:bg-brand-500 text-white text-sm font-bold rounded-full shadow-card-hover hover:scale-105 active:scale-95 transition-all duration-200">
+            <x-heroicon-o-share class="w-4 h-4" />
+            <span class="hidden sm:inline">Bagikan</span>
+        </button>
         <script>
         function copyLink() {
+            const btn = event.currentTarget;
+            const orig = btn.innerHTML;
             navigator.clipboard.writeText(window.location.href).then(() => {
-                const btn = event.currentTarget;
-                const orig = btn.innerHTML;
-                btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Link disalin!</span>';
+                btn.innerHTML = '<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg><span class="hidden sm:inline">Link disalin!</span>';
                 setTimeout(() => btn.innerHTML = orig, 2000);
             });
         }

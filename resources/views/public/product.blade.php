@@ -80,8 +80,38 @@
                     @if ($product->thumbnail_url)
                         <img src="{{ $product->thumbnail_url }}" class="w-full h-full object-cover" alt="{{ $product->title }}">
                     @else
-                        <div class="w-full h-full flex items-center justify-center text-ink-300">
-                            <x-heroicon-o-photo class="w-24 h-24" />
+                        {{-- Default gradient thumbnail by product type --}}
+                        <div class="w-full h-full flex items-center justify-center relative overflow-hidden
+                            @switch($product->type)
+                                @case('digital')       bg-gradient-to-br from-brand-400 via-brand-500 to-amber-500 @break
+                                @case('course')        bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 @break
+                                @case('event')         bg-gradient-to-br from-pink-400 via-rose-500 to-red-500 @break
+                                @case('appointment')   bg-gradient-to-br from-blue-400 via-cyan-500 to-teal-500 @break
+                                @case('donation')      bg-gradient-to-br from-rose-400 via-pink-500 to-fuchsia-500 @break
+                                @case('blog')          bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 @break
+                                @case('physical')      bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 @break
+                                @default               bg-gradient-to-br from-ink-400 via-ink-500 to-ink-600 @break
+                            @endswitch">
+                            {{-- Decorative orbs --}}
+                            <div class="absolute -top-12 -right-12 w-48 h-48 bg-white/20 rounded-full blur-2xl"></div>
+                            <div class="absolute -bottom-8 -left-8 w-32 h-32 bg-white/15 rounded-full blur-xl"></div>
+                            {{-- Type icon --}}
+                            <div class="relative z-10 text-white drop-shadow-lg">
+                                @switch($product->type)
+                                    @case('digital')       <svg class="w-24 h-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg> @break
+                                    @case('course')        <svg class="w-24 h-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg> @break
+                                    @case('event')         <svg class="w-24 h-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z"/></svg> @break
+                                    @case('appointment')   <svg class="w-24 h-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg> @break
+                                    @case('donation')      <svg class="w-24 h-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg> @break
+                                    @case('blog')          <svg class="w-24 h-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.875C4.254 3.75 3.75 4.254 3.75 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z"/></svg> @break
+                                    @case('physical')      <svg class="w-24 h-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg> @break
+                                    @default               <svg class="w-24 h-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg> @break
+                                @endswitch
+                            </div>
+                            {{-- Brand mark --}}
+                            <div class="absolute bottom-4 right-4 text-white/30 text-xs font-black uppercase tracking-widest">
+                                {{ config('app.name', 'Linka') }}
+                            </div>
                         </div>
                     @endif
                     {{-- Type badge --}}
