@@ -31,8 +31,13 @@
     {{-- Vite assets --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    {{-- Noto Color Emoji fallback (for cross-platform emoji rendering) --}}
+    {{-- Preconnect hints: warm DNS+TLS for external origins used on most pages.
+         Cuts ~100-300ms off the first request to each CDN (DNS+TCP+TLS roundtrips). --}}
     <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+    <link rel="preconnect" href="https://ui-avatars.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    {{-- Noto Color Emoji fallback (for cross-platform emoji rendering) --}}
     <link rel="stylesheet" href="https://fonts.bunny.net/css?family=noto-color-emoji:400" media="all">
 
     {{-- Page-specific head --}}

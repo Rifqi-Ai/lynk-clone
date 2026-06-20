@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CompressResponse;
 use App\Http\Middleware\RequestId;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
@@ -23,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Add security headers (X-Frame-Options, X-Content-Type-Options, etc.)
         $middleware->append(SecurityHeaders::class);
+
+        // Compress text responses (HTML/JSON/CSS/JS) with gzip when client supports it.
+        // Run AFTER SecurityHeaders so it operates on the final response body.
+        $middleware->append(CompressResponse::class);
 
         // Add X-Request-ID to every request for tracing / log correlation
         $middleware->prepend(RequestId::class);
