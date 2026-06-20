@@ -8,19 +8,58 @@ Pastikan laptop Anda sudah punya:
 
 | Tool | Min Version | Cara Cek | Cara Install (Ubuntu/Debian) |
 |------|-------------|----------|------------------------------|
-| **PHP** | 8.2+ | `php --version` | `sudo apt install php php-cli php-mbstring php-xml php-sqlite3 php-curl php-zip` |
+| **PHP** | 8.2+ | `php --version` | `sudo apt install php php-cli php-mbstring php-xml php-sqlite3 php-curl php-zip php-gd` |
 | **Composer** | 2.0+ | `composer --version` | [getcomposer.org](https://getcomposer.org/download) |
 | **Node.js** | 18+ | `node --version` | [nodejs.org](https://nodejs.org) atau `nvm install 18` |
 | **npm** | 9+ | `npm --version` | (included dengan Node.js) |
 | **Git** | 2.0+ | `git --version` | `sudo apt install git` |
 | **SQLite** | 3+ | `sqlite3 --version` | `sudo apt install sqlite3` |
 
+### ⚠️ PHP Extensions yang WAJIB ada
+Project ini **memerlukan** extension berikut aktif di `php.ini`:
+- `pdo_sqlite` (database)
+- `mbstring` (string handling)
+- `xml` & `dom` (parser)
+- `gd` ⚠️ **WAJIB** — untuk QR code generation
+- `curl` (HTTP client, untuk Duitku payment gateway)
+- `zip` (untuk `composer install` & package unzip)
+- `fileinfo`, `ctype`, `tokenizer`, `iconv` (biasanya default)
+
+Cek cepat:
+```bash
+php -m | grep -E "gd|curl|pdo_sqlite|mbstring|xml|zip"
+```
+Kalau ada yang missing (terutama `gd`):
+```bash
+# Ubuntu/Debian
+sudo apt install php8.3-gd php8.3-curl php8.3-mbstring php8.3-xml php8.3-zip php8.3-sqlite3
+
+# Catatan: ganti '8.3' dengan versi PHP Anda (`php --version` untuk cek)
+```
+
+### 🆘 Composer error: "requires ext-gd" ?
+```bash
+# Opsi 1 (recommended): install ext-gd
+sudo apt install php-gd     # Debian/Ubuntu generic
+# atau
+sudo apt install php8.3-gd  # spesifik versi
+
+# Opsi 2: bypass (QR code tidak akan bisa generate, fitur ini error):
+composer install --ignore-platform-req=ext-gd
+```
+
 ### Windows Users
 Download [Laragon](https://laragon.org/) (recommended) atau [XAMPP](https://www.apachefriends.org/). Laragon includes PHP + Composer + Node.js + MySQL out of the box.
+
+**Laragon otomatis enable `gd` + `curl` extension.** Kalau pakai XAMPP manual, enable via `php.ini` (uncomment `extension=gd` dan `extension=curl`).
 
 ### macOS Users
 ```bash
 brew install php composer node sqlite3
+# GD biasanya sudah include. Cek:
+php -m | grep gd
+# Kalau missing:
+brew install php-gd     # atau rebuild php dengan --with-gd
 ```
 
 ---
@@ -28,21 +67,19 @@ brew install php composer node sqlite3
 ## 🎯 Instalasi Step-by-Step
 
 ### Step 1: Clone Repository
-
+### Step 1: Clone Repository
 ```bash
-git clone https://github.com/<your-username>/linka.git
-cd linka
+git clone https://github.com/Rifqi-Ai/lynk-clone.git
+cd lynk-clone
 ```
 
-Ganti `<your-username>` dengan GitHub username Anda (nanti setelah push).
-
 ### Step 2: Install PHP Dependencies
-
 ```bash
 composer install
 ```
-
 Tunggu sampai selesai (~1-2 menit, tergantung internet).
+
+> **❗ Error "requires ext-gd"?** Lihat [Troubleshooting](#-troubleshooting) section di bawah.
 
 ### Step 3: Install JavaScript Dependencies
 
@@ -219,6 +256,23 @@ Login sebagai `demo_eko`:
 ---
 
 ## 🐛 Troubleshooting
+
+### ❌ `requires ext-gd` (saat `composer install`)
+```bash
+# Ubuntu/Debian — install GD extension
+sudo apt install php-gd          # generic
+sudo apt install php8.3-gd       # spesifik versi (sesuaikan dengan php --version)
+
+# Windows (Laragon) — biasanya sudah include, restart Laragon
+# Windows (XAMPP) — edit php.ini, uncomment:  extension=gd
+
+# macOS (Homebrew) — biasanya sudah include. Kalau tidak:
+brew install php-gd
+# atau rebuild: brew reinstall php --with-gd
+
+# Verify:
+php -m | grep gd
+```
 
 ### ❌ `SQLSTATE: database not found`
 ```bash
