@@ -4,38 +4,59 @@ Panduan lengkap untuk menjalankan **Linka** (lynk.id clone) di laptop Anda dari 
 
 ## 📋 Prerequisites
 
-Pastikan laptop Anda sudah punya:
+Pastikan laptop Anda sudah punya (versi **Ubuntu 24.04 / Noble** atau setara):
 
-| Tool | Min Version | Cara Cek | Cara Install (Ubuntu/Debian) |
-|------|-------------|----------|------------------------------|
-| **PHP** | 8.2+ | `php --version` | `sudo apt install php php-cli php-mbstring php-xml php-sqlite3 php-curl php-zip php-gd` |
-| **Composer** | 2.0+ | `composer --version` | [getcomposer.org](https://getcomposer.org/download) |
-| **Node.js** | 18+ | `node --version` | [nodejs.org](https://nodejs.org) atau `nvm install 18` |
-| **npm** | 9+ | `npm --version` | (included dengan Node.js) |
-| **Git** | 2.0+ | `git --version` | `sudo apt install git` |
-| **SQLite** | 3+ | `sqlite3 --version` | `sudo apt install sqlite3` |
+### 🎯 Quick install (Ubuntu/Debian)
+Copy-paste satu baris ini untuk install SEMUA yang dibutuhkan:
 
-### ⚠️ PHP Extensions yang WAJIB ada
-Project ini **memerlukan** extension berikut aktif di `php.ini`:
-- `pdo_sqlite` (database)
-- `mbstring` (string handling)
-- `xml` & `dom` (parser)
-- `gd` ⚠️ **WAJIB** — untuk QR code generation
-- `curl` (HTTP client, untuk Duitku payment gateway)
-- `zip` (untuk `composer install` & package unzip)
-- `fileinfo`, `ctype`, `tokenizer`, `iconv` (biasanya default)
-
-Cek cepat:
 ```bash
-php -m | grep -E "gd|curl|pdo_sqlite|mbstring|xml|zip"
+sudo apt update && sudo apt install -y \
+  php8.3 php8.3-cli php8.3-common \
+  php8.3-mbstring php8.3-xml php8.3-curl \
+  php8.3-zip php8.3-gd php8.3-sqlite3 \
+  php8.3-bcmath php8.3-intl php8.3-opcache \
+  php8.3-readline php8.3-fileinfo \
+  composer nodejs npm git sqlite3 unzip
 ```
-Kalau ada yang missing (terutama `gd`):
-```bash
-# Ubuntu/Debian
-sudo apt install php8.3-gd php8.3-curl php8.3-mbstring php8.3-xml php8.3-zip php8.3-sqlite3
 
-# Catatan: ganti '8.3' dengan versi PHP Anda (`php --version` untuk cek)
+> **Catatan versi PHP**: Ganti `8.3` dengan versi Anda (`php --version` untuk cek). Untuk Ubuntu 22.04 ganti jadi `8.1`, dst.
+
+### 🔍 Verifikasi setelah install
+```bash
+php --version          # Harus 8.2+
+php -m | grep -iE "gd|curl|pdo_sqlite|mbstring|xml|zip|bcmath|intl"
+# Harus output: bcmath, curl, fileinfo, gd, intl, mbstring, openssl, pdo_sqlite, zip, dll.
+composer --version     # 2.0+
+node --version         # 18+
+npm --version          # 9+
+git --version          # 2.0+
 ```
+
+### 🪟 Windows Users
+Download [Laragon](https://laragon.org/) (recommended) — sudah include PHP 8.3 + Composer + Node.js + semua extensions Laravel out of the box. **Tidak perlu setup manual**.
+
+[XAMPP](https://www.apachefriends.org/) juga bisa, tapi harus enable extensions manual via `php.ini` (uncomment `extension=gd`, `extension=curl`, `extension=pdo_sqlite`).
+
+### 🍎 macOS Users
+```bash
+brew install php composer node sqlite3
+# PHP dari Homebrew sudah include semua extensions umum
+```
+
+---
+
+### ❗ PHP Extensions yang WAJIB ada
+
+Project ini **memerlukan** extensions berikut (untuk QR code, payment gateway, database, dll.):
+- `pdo_sqlite` — database
+- `mbstring` — string handling
+- `xml` & `dom` — parser
+- `gd` — QR code generation
+- `curl` — HTTP client (Duitku payment)
+- `zip` — `composer install` & package unzip
+- `bcmath` — kalkulasi harga/fee
+- `intl` — internationalization
+- `fileinfo`, `ctype`, `tokenizer`, `iconv` — biasanya default
 
 ### 🆘 Composer error: "requires ext-gd" ?
 ```bash
@@ -273,6 +294,36 @@ brew install php-gd
 # Verify:
 php -m | grep gd
 ```
+
+### ❌ `could not find driver` (saat `migrate` / `db`)
+Driver PHP untuk database tidak terinstall.
+```bash
+# SQLite (default project ini)
+sudo apt install php8.3-sqlite3    # sesuaikan versi PHP Anda
+
+# MySQL (kalau ganti DB)
+sudo apt install php8.3-mysql
+# Edit .env: DB_CONNECTION=mysql + DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+
+# PostgreSQL
+sudo apt install php8.3-pgsql
+
+# Verify driver terinstall:
+php -m | grep -iE "pdo|sqlite|mysql|pgsql"
+# Harus ada: PDO, pdo_sqlite (atau pdo_mysql / pdo_pgsql)
+```
+
+### ❌ "Please provide a valid cache path" (saat buka web)
+Folder `storage/framework/` belum dibuat — biasanya karena `git clone` skip empty dirs.
+```bash
+cd ~/lynk-clone
+mkdir -p storage/framework/cache storage/framework/sessions \
+         storage/framework/views storage/framework/testing \
+         storage/logs bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+php artisan optimize:clear
+```
+> **Note**: Update terbaru project ini sudah include `.gitkeep` files + `post-autoload-dump` composer script yang auto-create folders, jadi issue ini seharusnya tidak terjadi lagi. Tapi kalau sempat, jalankan command di atas.
 
 ### ❌ `SQLSTATE: database not found`
 ```bash

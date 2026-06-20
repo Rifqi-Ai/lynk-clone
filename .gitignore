@@ -49,8 +49,8 @@ auth.json
 # Local database (dev only — uncomment to commit)
 # /database/database.sqlite
 /storage/framework/cache/data
-/storage/framework/sessions
-/storage/framework/views
+# /storage/framework/sessions  -- now handled by per-dir .gitignore (allows .gitkeep)
+# /storage/framework/views     -- now handled by per-dir .gitignore (allows .gitkeep)
 /storage/debugbar
 
 # OS
