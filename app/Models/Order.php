@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'unit_price', 'quantity', 'subtotal', 'fee_pct', 'fee_amount', 'total', 'creator_payout',
     'voucher_code', 'voucher_discount', 'metadata',
     'expired_at',
+    'shipping_status', // physical-product fulfillment state: pending|packed|shipped|delivered
     // payment_status, paid_at, duitku_* are deliberately NOT fillable — only PaymentCallbackController
     // (signature-verified) and Order state machine methods can mutate these. Prevents attackers
     // from POSTing payment_status=paid to mark their own orders as paid.

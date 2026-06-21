@@ -48,7 +48,11 @@
         <ul class="divide-y divide-ink-100">
             @foreach ($orders as $order)
                 @php
-                    $status = data_get($order->metadata, 'shipping_status', 'pending');
+                    // shipping_status is a first-class column on orders (see migration
+                    // 2026_06_21_120000_promote_shipping_status_to_column). Fall back to
+                    // metadata for any legacy row that somehow has NULL.
+                    $status = $order->shipping_status
+                        ?? data_get($order->metadata, 'shipping_status', 'pending');
                     $statusConfig = [
                         'pending' => ['bg-ink-100 text-ink-700', '⏳ Pending', 'bg-ink-400'],
                         'packed' => ['bg-amber-100 text-amber-700', '📦 Packed', 'bg-amber-500'],

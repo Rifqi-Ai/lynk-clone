@@ -32,6 +32,9 @@ class OrderService
     /** Default transaction fee when creator has none set */
     public const DEFAULT_FEE_PCT = 10;
 
+    /** Initial shipping state for new physical orders (also first in workflow sort). */
+    public const SHIPPING_STATUS_PENDING = 'pending';
+
     /**
      * Create a single-product order.
      *
@@ -72,6 +75,9 @@ class OrderService
                 'voucher_discount' => $voucherDiscount,
                 'metadata' => $this->buildOrderMetadata($product, $data),
                 'expired_at' => now()->addHours(24),
+                // First-class column for physical products. Other types stay NULL
+                // (they don't ship). Workflow: pending → packed → shipped → delivered.
+                'shipping_status' => $product->type === 'physical' ? self::SHIPPING_STATUS_PENDING : null,
             ]);
             // payment_status not fillable — assign directly (bypasses mass-assignment protection)
             $order->payment_status = 'pending';
@@ -200,7 +206,8 @@ class OrderService
 
         if ($product->type === 'physical' && ! empty($data['ship'])) {
             $metadata['shipping_address'] = $data['ship'];
-            $metadata['shipping_status'] = 'pending'; // pending → packed → shipped → delivered
+            // NOTE: shipping_status itself is a first-class column on orders (not metadata).
+            // See migration 2026_06_21_120000_promote_shipping_status_to_column.
         }
 
         if ($product->type === 'event' && ! empty($data['attendee_name'])) {
