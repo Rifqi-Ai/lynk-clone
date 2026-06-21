@@ -33,7 +33,7 @@
 
                 <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-ink-900 text-balance leading-[1.05] animate-fade-up">
                     Satu link.<br>
-                    <span class="text-gradient-warm">Tak terhingga</span><br>
+                    <span class="text-gradient-warm drop-shadow-[0_2px_4px_rgba(255,87,34,0.15)]">Tak terhingga</span><br>
                     kemungkinan.
                 </h1>
 
@@ -73,7 +73,7 @@
             {{-- ─── Right: Interactive phone mockup (5 cols) ─── --}}
             <div class="lg:col-span-5 relative">
                 {{-- Floating stat cards behind phone --}}
-                <div class="absolute -top-4 -left-4 lg:-left-8 z-20 hidden md:block animate-float-slow">
+                <div class="absolute top-2 -left-2 lg:-left-4 z-20 hidden md:block animate-float-slow">
                     <div class="bg-white rounded-2xl shadow-card-hover p-3.5 border border-ink-200 flex items-center gap-3 max-w-[220px]">
                         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white">
                             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c.1-.621.504-1.125 1.125-1.125H20.25"/></svg>
@@ -332,7 +332,7 @@
                 ];
             @endphp
             @foreach($steps as $s)
-                <div class="card-warm-hover p-7 group relative overflow-hidden">
+                <div class="card-warm-hover p-6 group relative overflow-hidden">
                     <div class="absolute -top-8 -right-8 text-7xl font-black text-brand-100/50 group-hover:text-brand-200/70 transition-colors">{{ $s['num'] }}</div>
                     <div class="relative">
                         <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500 to-amber-500 text-white flex items-center justify-center mb-5 shadow-cta">
@@ -375,9 +375,10 @@
 </section>
 
 {{-- ============================================================
-     FINAL CTA
+     FINAL CTA — Issue #7: reduced padding from py-16/24 to py-12/16
+     to tighten the rhythm between testimonial and final CTA
      ============================================================ --}}
-<section class="section">
+<section class="section-tight">
     <div class="container-narrow">
         <div class="relative overflow-hidden rounded-3xl mesh-gradient-dark p-10 md:p-14 text-center text-white animate-fade-up">
             <div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
