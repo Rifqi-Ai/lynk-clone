@@ -16,56 +16,56 @@
 {{-- ─── Stats row ─── --}}
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 stagger">
     {{-- Products --}}
-    <div class="stat-card group">
+    <div class="stat-card group" role="group" aria-label="Products: {{ $stats['total_products'] }} total, {{ $stats['published_products'] }} published">
         <div class="flex items-start justify-between">
             <div>
                 <p class="text-xs font-semibold text-ink-500 uppercase tracking-wider">Products</p>
                 <p class="mt-2 text-3xl font-bold text-ink-900 tracking-tight">{{ $stats['total_products'] }}</p>
                 <p class="text-xs text-ink-500 mt-1">{{ $stats['published_products'] }} published</p>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div class="w-10 h-10 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center group-hover:scale-110 transition-transform" aria-hidden="true">
                 <x-heroicon-o-cube class="w-5 h-5" />
             </div>
         </div>
     </div>
 
     {{-- Sales --}}
-    <div class="stat-card group">
+    <div class="stat-card group" role="group" aria-label="Sales: {{ $stats['total_sales'] }} total, {{ $stats['pending_orders'] }} pending orders">
         <div class="flex items-start justify-between">
             <div>
                 <p class="text-xs font-semibold text-ink-500 uppercase tracking-wider">Sales</p>
                 <p class="mt-2 text-3xl font-bold text-ink-900 tracking-tight">{{ $stats['total_sales'] }}</p>
                 <p class="text-xs text-ink-500 mt-1">{{ $stats['pending_orders'] }} pending</p>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div class="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center group-hover:scale-110 transition-transform" aria-hidden="true">
                 <x-heroicon-o-shopping-bag class="w-5 h-5" />
             </div>
         </div>
     </div>
 
     {{-- Revenue --}}
-    <div class="stat-card group">
+    <div class="stat-card group" role="group" aria-label="Revenue: Rp {{ number_format($stats['total_revenue'], 0, ',', '.') }} total after {{ auth()->user()->transaction_fee_pct }}% platform fee">
         <div class="flex items-start justify-between">
             <div>
                 <p class="text-xs font-semibold text-ink-500 uppercase tracking-wider">Revenue</p>
                 <p class="mt-2 text-2xl font-bold text-ink-900 tracking-tight">Rp {{ number_format($stats['total_revenue'], 0, ',', '.') }}</p>
                 <p class="text-xs text-ink-500 mt-1">After {{ auth()->user()->transaction_fee_pct }}% fee</p>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform" aria-hidden="true">
                 <x-heroicon-s-banknotes class="w-5 h-5" />
             </div>
         </div>
     </div>
 
     {{-- Views --}}
-    <div class="stat-card group">
+    <div class="stat-card group" role="group" aria-label="Profile views: {{ number_format($stats['profile_views']) }} across all products">
         <div class="flex items-start justify-between">
             <div>
                 <p class="text-xs font-semibold text-ink-500 uppercase tracking-wider">Views</p>
                 <p class="mt-2 text-3xl font-bold text-ink-900 tracking-tight">{{ number_format($stats['profile_views']) }}</p>
                 <p class="text-xs text-ink-500 mt-1">All products</p>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform" aria-hidden="true">
                 <x-heroicon-o-eye class="w-5 h-5" />
             </div>
         </div>
@@ -92,7 +92,7 @@
             </div>
         </div>
         <div class="relative" style="height: 200px;">
-            <canvas id="revenueChart"></canvas>
+            <canvas id="revenueChart" role="img" aria-label="Revenue chart: {{ collect($revenueChart)->sum('amount') }} rupiah earned over the last 30 days. Use interactive controls to filter by date range."></canvas>
         </div>
     </div>
 
@@ -114,7 +114,7 @@
             </div>
         </div>
         <div class="relative" style="height: 200px;">
-            <canvas id="salesChart"></canvas>
+            <canvas id="salesChart" role="img" aria-label="Sales chart: {{ collect($salesChart)->sum('count') }} orders over the last 30 days. Use interactive controls to filter by date range."></canvas>
         </div>
     </div>
 </div>
@@ -131,8 +131,8 @@
             <a href="{{ route('dashboard.products.index') }}" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Lihat semua →</a>
         </div>
         @if ($topProducts->isEmpty() || $topProducts->sum('paid_orders_sum_creator_payout') == 0)
-            <div class="empty-state !py-10">
-                <div class="empty-state-icon !w-12 !h-12">
+            <div class="empty-state !py-10" role="status" aria-live="polite">
+                <div class="empty-state-icon !w-12 !h-12" aria-hidden="true">
                     <x-heroicon-o-chart-bar class="w-6 h-6 text-ink-400" />
                 </div>
                 <p class="mt-3 text-sm text-ink-500">Belum ada penjualan</p>
@@ -146,9 +146,9 @@
                         <a href="{{ $product->url }}" class="flex items-center gap-3 p-2 -mx-2 rounded-xl hover:bg-ink-50 transition-colors group">
                             <div class="w-10 h-10 flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-brand-50 to-brand-100">
                                 @if ($product->thumbnail_url)
-                                    <img src="{{ $product->thumbnail_url }}" class="w-full h-full object-cover">
+                                    <img src="{{ $product->thumbnail_url }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
                                 @else
-                                    <div class="w-full h-full flex items-center justify-center text-brand-600">
+                                    <div class="w-full h-full flex items-center justify-center text-brand-600" aria-hidden="true">
                                         <x-heroicon-o-cube class="w-5 h-5" />
                                     </div>
                                 @endif
@@ -174,8 +174,8 @@
             Sales by Type
         </h2>
         @if (empty($salesByType) || collect($salesByType)->sum('count') == 0)
-            <div class="empty-state !py-10">
-                <div class="empty-state-icon !w-12 !h-12">
+            <div class="empty-state !py-10" role="status" aria-live="polite">
+                <div class="empty-state-icon !w-12 !h-12" aria-hidden="true">
                     <x-heroicon-o-inbox class="w-6 h-6 text-ink-400" />
                 </div>
                 <p class="mt-3 text-sm text-ink-500">Belum ada data</p>
@@ -192,7 +192,9 @@
                             <span class="font-semibold text-ink-900">{{ $row['label'] }}</span>
                             <span class="text-ink-500"><span class="font-bold text-ink-900">{{ $row['count'] }}</span> · {{ round($pct) }}%</span>
                         </div>
-                        <div class="h-2 rounded-full bg-ink-100 overflow-hidden">
+                        <div class="h-2 rounded-full bg-ink-100 overflow-hidden" role="progressbar"
+                             aria-valuenow="{{ round($pct) }}" aria-valuemin="0" aria-valuemax="100"
+                             aria-label="{{ $row['label'] }} sales share: {{ round($pct) }} percent">
                             <div class="h-full bg-gradient-to-r from-brand-500 to-brand-700 rounded-full transition-all duration-500" style="width: {{ $pct }}%"></div>
                         </div>
                     </div>
@@ -214,17 +216,27 @@
         </div>
         <div class="overflow-x-auto -mx-5 md:-mx-6">
             <table class="w-full text-sm">
+                <caption class="sr-only">Recent orders — last {{ $recentOrders->count() }} orders received</caption>
                 <thead>
                     <tr class="text-xs text-ink-500 uppercase tracking-wider border-b border-ink-100">
-                        <th class="text-left font-semibold px-5 md:px-6 py-3">Order</th>
-                        <th class="text-left font-semibold px-3 py-3">Product</th>
-                        <th class="text-left font-semibold px-3 py-3">Buyer</th>
-                        <th class="text-right font-semibold px-3 py-3">Total</th>
-                        <th class="text-right font-semibold px-5 md:px-6 py-3">Status</th>
+                        <th class="text-left font-semibold px-5 md:px-6 py-3" scope="col">Order</th>
+                        <th class="text-left font-semibold px-3 py-3" scope="col">Product</th>
+                        <th class="text-left font-semibold px-3 py-3" scope="col">Buyer</th>
+                        <th class="text-right font-semibold px-3 py-3" scope="col">Total</th>
+                        <th class="text-right font-semibold px-5 md:px-6 py-3" scope="col">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-ink-100">
                     @foreach ($recentOrders as $order)
+                        @php
+                            // Mask buyer email for privacy in dashboard (show first char + *** + domain).
+                            // Creator needs to see WHO bought for fulfillment, but full email is overkill.
+                            $maskedEmail = $order->buyer_email;
+                            if (str_contains($maskedEmail, '@')) {
+                                [$local, $domain] = explode('@', $maskedEmail, 2);
+                                $maskedEmail = mb_substr($local, 0, 1) . str_repeat('*', max(3, mb_strlen($local) - 1)) . '@' . $domain;
+                            }
+                        @endphp
                         <tr class="hover:bg-ink-50 transition-colors">
                             <td class="px-5 md:px-6 py-3">
                                 <span class="font-mono text-xs text-ink-700">#{{ $order->order_number ?? substr($order->id, 0, 8) }}</span>
@@ -232,7 +244,7 @@
                             <td class="px-3 py-3">
                                 <a href="{{ $order->product?->url ?? '#' }}" class="font-semibold text-ink-900 hover:text-brand-600 truncate inline-block max-w-[200px]">{{ $order->product?->title ?? '(deleted)' }}</a>
                             </td>
-                            <td class="px-3 py-3 text-ink-700 text-xs">{{ $order->buyer_email }}</td>
+                            <td class="px-3 py-3 text-ink-700 text-xs" title="{{ $order->buyer_email }}">{{ $maskedEmail }}</td>
                             <td class="px-3 py-3 text-right font-bold text-ink-900 whitespace-nowrap">Rp {{ number_format($order->total, 0, ',', '.') }}</td>
                             <td class="px-5 md:px-6 py-3 text-right">
                                 @php
