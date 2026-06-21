@@ -45,9 +45,10 @@
                     @endphp
                     @foreach($demos as $d)
                         <button type="button"
+                                aria-label="Login otomatis sebagai {{ $d['name'] }}"
                                 onclick="document.getElementById('login').value='{{ $d['login'] }}'; document.getElementById('password').value='password123'; showToast('Akun demo {{ $d['name'] }} dipilih', 'success');"
                                 class="group inline-flex items-center gap-2 pl-1.5 pr-3 py-1.5 bg-white border border-ink-200 hover:border-brand-400 hover:bg-brand-50 hover:shadow-sm text-ink-800 rounded-full transition-all">
-                            <span class="w-6 h-6 rounded-full bg-gradient-to-br {{ $d['color'] }} text-white text-xs font-bold flex items-center justify-center">{{ $d['avatar'] }}</span>
+                            <span class="w-6 h-6 rounded-full bg-gradient-to-br {{ $d['color'] }} text-white text-xs font-bold flex items-center justify-center" aria-hidden="true">{{ $d['avatar'] }}</span>
                             <span class="text-xs font-semibold">{{ $d['name'] }}</span>
                         </button>
                     @endforeach
@@ -66,29 +67,32 @@
                     <input id="login" name="login" type="text" required autocomplete="username" autofocus
                            value="{{ old('login') }}"
                            class="form-input @error('login') border-error @enderror"
-                           placeholder="kamu@email.com atau username">
+                           placeholder="kamu@email.com atau username"
+                           @error('login') aria-invalid="true" aria-describedby="login-error" @enderror>
                     @error('login')
-                        <p class="form-error">{{ $message }}</p>
+                        <p class="form-error" id="login-error" role="alert">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <label for="password" class="form-label mb-0">Password</label>
-                        <a href="#" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Lupa?</a>
+                        {{-- TODO(phase-18): add password reset route, then re-enable this link --}}
+                        {{-- <a href="{{ route('password.request') }}" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Lupa?</a> --}}
                     </div>
                     <div class="relative">
                         <input id="password" name="password" type="password" required autocomplete="current-password"
                                class="form-input pr-12 @error('password') border-error @enderror"
-                               placeholder="••••••••">
-                        <button type="button" data-toggle-password="password"
+                               placeholder="Masukkan password kamu"
+                               @error('password') aria-invalid="true" aria-describedby="password-error" @enderror>
+                        <button type="button" data-toggle-password="password" aria-label="Toggle password visibility"
                                 class="absolute inset-y-0 right-0 flex items-center px-3.5 text-ink-400 hover:text-ink-700 transition-colors">
                             <svg class="eye-open w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
                             <svg class="eye-closed hidden w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/></svg>
                         </button>
                     </div>
                     @error('password')
-                        <p class="form-error">{{ $message }}</p>
+                        <p class="form-error" id="password-error" role="alert">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -190,19 +194,32 @@
 <div id="toast-container" class="toast-container"></div>
 
 <script>
-function showToast(message, type = 'success') {
+function showToast(message, type = 'success', duration = 5000) {
     const container = document.getElementById('toast-container');
     if (!container) return;
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+    toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+    const closeBtn = '<button type="button" aria-label="Close notification" class="ml-2 -mr-1 p-1 rounded hover:bg-black/10 transition-colors flex-shrink-0" onclick="this.closest(\'.toast\').remove()"><svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>';
     const icon = type === 'success'
         ? '<svg class="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>'
         : type === 'error'
         ? '<svg class="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>'
         : '<svg class="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"/></svg>';
-    toast.innerHTML = `${icon}<span class="font-medium">${message}</span>`;
+    toast.innerHTML = `${icon}<span class="font-medium flex-1">${message}</span>${closeBtn}`;
     container.appendChild(toast);
-    setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(20px)'; setTimeout(() => toast.remove(), 300); }, 3000);
+    // Auto-dismiss after duration (default 5s — up from 3s for a11y/older users).
+    // Hover pauses dismissal so users can read at their own pace.
+    let dismissTimer = setTimeout(() => dismissToast(toast), duration);
+    toast.addEventListener('mouseenter', () => clearTimeout(dismissTimer));
+    toast.addEventListener('mouseleave', () => { dismissTimer = setTimeout(() => dismissToast(toast), duration); });
+}
+function dismissToast(toast) {
+    if (!toast || !toast.parentNode) return;
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(20px)';
+    setTimeout(() => toast.remove(), 300);
 }
 window.showToast = showToast;
 
