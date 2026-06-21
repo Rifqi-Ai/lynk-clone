@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasProductAccessors;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,6 +24,13 @@ use Illuminate\Support\Str;
  *   - course:     { modules: [...], total_duration_minutes, level, certificate }
  *   - blog:       { body_markdown, is_paywalled, preview_text }
  *   - physical:   { stock_quantity, weight_grams, requires_shipping, dimensions }
+ *
+ * **Accessors** (17) live in `HasProductAccessors` trait. This keeps the model
+ * focused on data + relationships + state transitions. See the trait for
+ * the accessor catalog organized by section (URL/asset, pricing, type metadata,
+ * type-specific).
+ *
+ * @see App\Models\Concerns\HasProductAccessors
  */
 #[Fillable([
     'user_id', 'type', 'title', 'slug', 'description',
@@ -38,6 +46,7 @@ use Illuminate\Support\Str;
 class Product extends Model
 {
     use HasFactory;
+    use HasProductAccessors;
 
     public $incrementing = false;
 
@@ -76,7 +85,6 @@ class Product extends Model
             if (empty($product->slug)) {
                 $product->slug = Str::slug($product->title);
             }
-            // Ensure slug is unique within owner's products by appending short suffix
             if (empty($product->metadata)) {
                 $product->metadata = [];
             }
@@ -120,203 +128,10 @@ class Product extends Model
         return $this->hasMany(CourseModule::class, 'product_id')->orderBy('position');
     }
 
-    // ───── Helpers ─────
-
-    public function getUrlAttribute(): string
-    {
-        return url("/{$this->owner->username}/{$this->id}");
-    }
-
-    /**
-     * Get the checkout URL for this product.
-     * Routes customer to {username}/{productId}/checkout where they enter payment details.
-     */
-    public function getCheckoutUrlAttribute(): string
-    {
-        return url("/{$this->owner->username}/{$this->id}/checkout");
-    }
-
-    public function getThumbnailUrlAttribute(): ?string
-    {
-        if ($this->thumbnail_path && \Storage::disk('public')->exists($this->thumbnail_path)) {
-            return \Storage::disk('public')->url($this->thumbnail_path);
-        }
-
-        return null;
-    }
-
-    public function getFileSizeFormattedAttribute(): ?string
-    {
-        if (! $this->file_size) {
-            return null;
-        }
-        $units = ['B', 'KB', 'MB', 'GB'];
-        $size = $this->file_size;
-        $i = 0;
-        while ($size >= 1024 && $i < count($units) - 1) {
-            $size /= 1024;
-            $i++;
-        }
-
-        return round($size, 2).' '.$units[$i];
-    }
-
-    public function getHasDiscountAttribute(): bool
-    {
-        return $this->compare_at_price && $this->compare_at_price > $this->price;
-    }
-
-    public function getDiscountPercentageAttribute(): int
-    {
-        if (! $this->has_discount) {
-            return 0;
-        }
-
-        return (int) round((($this->compare_at_price - $this->price) / $this->compare_at_price) * 100);
-    }
+    // ───── Behavior helpers (not accessors — state predicates) ─────
 
     public function isPublished(): bool
     {
         return $this->status === 'published';
-    }
-
-    public function getTypeLabelAttribute(): string
-    {
-        return self::TYPES[$this->type]['label'] ?? ucfirst($this->type);
-    }
-
-    public function getTypeIconAttribute(): string
-    {
-        return self::TYPES[$this->type]['icon'] ?? '📦';
-    }
-
-    /**
-     * Get metadata value with default.
-     */
-    public function meta(string $key, mixed $default = null): mixed
-    {
-        return data_get($this->metadata, $key, $default);
-    }
-
-    /**
-     * Set a metadata value.
-     */
-    public function setMeta(string $key, mixed $value): void
-    {
-        $metadata = $this->metadata ?? [];
-        $metadata[$key] = $value;
-        $this->metadata = $metadata;
-    }
-
-    // ───── Type-specific helpers ─────
-
-    /** Donation: preset amounts (default if not set) */
-    public function getDonationPresetsAttribute(): array
-    {
-        return $this->meta('preset_amounts', [10000, 25000, 50000, 100000, 250000]);
-    }
-
-    /** Donation: goal amount */
-    public function getDonationGoalAttribute(): ?float
-    {
-        return $this->meta('goal_amount');
-    }
-
-    /** Donation: current raised (computed live from orders, not metadata) */
-    public function getDonationRaisedAttribute(): float
-    {
-        // Always recalculate from paid orders for accuracy
-        return (float) $this->paidOrders()->sum('total');
-    }
-
-    /** Appointment: duration in minutes */
-    public function getDurationMinutesAttribute(): int
-    {
-        return (int) $this->meta('duration_minutes', 60);
-    }
-
-    /** Appointment: duration formatted (e.g. "1h 30m") */
-    public function getDurationFormattedAttribute(): string
-    {
-        $mins = $this->duration_minutes;
-        $hours = intdiv($mins, 60);
-        $m = $mins % 60;
-        if ($hours > 0 && $m > 0) {
-            return "{$hours}h {$m}m";
-        }
-        if ($hours > 0) {
-            return "{$hours}h";
-        }
-
-        return "{$m}m";
-    }
-
-    /** Event: date */
-    public function getEventDateAttribute(): ?string
-    {
-        return $this->meta('event_date');
-    }
-
-    /** Course: total duration in minutes */
-    public function getCourseDurationAttribute(): int
-    {
-        return (int) $this->meta('total_duration_minutes', 0);
-    }
-
-    /** Course: number of modules */
-    public function getCourseModulesAttribute(): int
-    {
-        return count($this->meta('modules', []));
-    }
-
-    /** Blog: body markdown */
-    public function getBlogBodyAttribute(): ?string
-    {
-        return $this->meta('body_markdown');
-    }
-
-    /** Blog: is paywalled? */
-    public function getIsPaywalledAttribute(): bool
-    {
-        return (bool) $this->meta('is_paywalled', false);
-    }
-
-    /** Physical: stock */
-    public function getStockQuantityAttribute(): ?int
-    {
-        return $this->meta('stock_quantity');
-    }
-
-    /** Physical: in stock? */
-    public function getInStockAttribute(): bool
-    {
-        $stock = $this->stock_quantity;
-
-        return $stock === null || $stock > 0;
-    }
-
-    /** Blog: estimated reading time in minutes (avg 200 words/min, min 1) */
-    public function getReadTimeAttribute(): int
-    {
-        $body = $this->meta('body_markdown', '');
-        $wordCount = str_word_count(strip_tags($body));
-
-        return max(1, (int) ceil($wordCount / 200));
-    }
-
-    /** Digital: public URL to download file */
-    public function getFileUrlAttribute(): ?string
-    {
-        if (! $this->file_path) {
-            return null;
-        }
-
-        return \Storage::disk('public')->url($this->file_path);
-    }
-
-    /** Physical: whether inventory is tracked (default true for safety) */
-    public function getTrackInventoryAttribute(): bool
-    {
-        return (bool) $this->meta('track_inventory', true);
     }
 }
