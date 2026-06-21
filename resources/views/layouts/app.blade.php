@@ -144,7 +144,7 @@
     {{-- Footer --}}
     <footer class="border-t border-ink-100 bg-white mt-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="grid md:grid-cols-4 gap-8">
+            <div class="grid md:grid-cols-5 gap-8">
                 <div class="md:col-span-1">
                     <a href="{{ route('home') }}" class="inline-flex items-center gap-2.5 mb-3">
                         <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
@@ -159,7 +159,13 @@
                     <ul class="space-y-2 text-sm text-ink-500">
                         <li><a href="{{ route('home') }}#features" class="hover:text-brand-600 transition-colors">Features</a></li>
                         <li><a href="{{ route('pricing') }}" class="hover:text-brand-600 transition-colors">Pricing</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-ink-900 mb-3">Bantuan</h3>
+                    <ul class="space-y-2 text-sm text-ink-500">
                         <li><a href="{{ route('faq') }}" class="hover:text-brand-600 transition-colors">FAQ</a></li>
+                        <li><a href="mailto:support@linka.id" class="hover:text-brand-600 transition-colors">Email Support</a></li>
                     </ul>
                 </div>
                 <div>
