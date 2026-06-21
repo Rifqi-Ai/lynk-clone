@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Services\DuitkuService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -234,17 +235,55 @@ class PaymentCallbackController extends Controller
 
     /**
      * Success redirect from Duitku payment page.
+     *
+     * SECURITY: BFLA fix (Phase 17 Task #2 / OWASP API5:2023). Previously anyone
+     * with an order ID could view the success page and see the buyer's email +
+     * order details. Now requires proof of ownership via auth (buyer OR creator)
+     * OR a signed access token (same pattern as CourseController/EventController).
      */
-    public function success(Order $order)
+    public function success(Request $request, Order $order)
     {
+        $this->authorizeOrderAccess($request, $order);
+
         return view('payment.success', compact('order'));
     }
 
     /**
      * Failed/expired redirect.
+     *
+     * SECURITY: BFLA fix (Phase 17 Task #2 / OWASP API5:2023). Same access
+     * control as success() — requires buyer/creator auth OR signed token.
      */
-    public function failed(Order $order)
+    public function failed(Request $request, Order $order)
     {
+        $this->authorizeOrderAccess($request, $order);
+
         return view('payment.failed', compact('order'));
+    }
+
+    /**
+     * Verify the caller has access to view the given order's payment pages.
+     * Allowed: authenticated buyer (matched by user_id or email), the creator
+     * who owns the product, OR guest with a valid signed access token.
+     */
+    private function authorizeOrderAccess(Request $request, Order $order): void
+    {
+        $user = Auth::user();
+
+        $isBuyer = $user && (
+            $order->buyer_user_id === $user->id
+            || strtolower((string) $order->buyer_email) === strtolower((string) $user->email)
+        );
+        $isCreator = $user && $order->creator_user_id === $user->id;
+        $hasValidToken = CourseController::verifyAccessToken(
+            $request->query('token'),
+            $order->id,
+            (string) $order->buyer_email,
+            (string) $order->product_id
+        );
+
+        if (! $isBuyer && ! $isCreator && ! $hasValidToken) {
+            abort(403, 'Akses ditolak — order ini bukan milik Anda.');
+        }
     }
 }

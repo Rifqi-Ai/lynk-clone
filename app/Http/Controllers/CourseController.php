@@ -78,6 +78,48 @@ class CourseController extends Controller
     }
 
     /**
+     * Verify a signed access token. Returns true iff the token is well-formed,
+     * the HMAC matches (orderId + buyer_email + product_id), and the orderId
+     * is non-empty. Reused by EventController@ticket + PaymentCallbackController
+     * for guest-checkout access paths.
+     */
+    public static function verifyAccessToken(?string $token, string $orderId, string $buyerEmail, string $productId): bool
+    {
+        if (! $token) {
+            return false;
+        }
+
+        $parts = explode('.', $token, 2);
+        if (count($parts) !== 2) {
+            return false;
+        }
+        [$payload, $signature] = $parts;
+
+        $decoded = base64_decode(strtr($payload, '-_', '+/'), true);
+        if ($decoded === false || ! str_contains($decoded, '|')) {
+            return false;
+        }
+
+        [$tokenOrderId, $tokenEmail] = explode('|', $decoded, 2);
+        $tokenOrderId = trim($tokenOrderId);
+        $tokenEmail = strtolower(trim($tokenEmail));
+
+        // Token must reference the SAME orderId the caller claims to access.
+        if ($tokenOrderId !== $orderId) {
+            return false;
+        }
+
+        // Email case-insensitive match (form may normalize differently).
+        if ($tokenEmail !== strtolower(trim($buyerEmail))) {
+            return false;
+        }
+
+        $expected = hash_hmac('sha256', $tokenOrderId.'|'.$tokenEmail.'|'.$productId, config('app.key'));
+
+        return hash_equals($expected, $signature);
+    }
+
+    /**
      * Course player page (only accessible after purchase).
      */
     public function show(Request $request, string $username, string $productId)

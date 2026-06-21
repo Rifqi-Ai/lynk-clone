@@ -13,6 +13,12 @@ class EventController extends Controller
 {
     /**
      * Buyer's ticket view (after purchase).
+     *
+     * SECURITY: BFLA fix (Phase 17 Task #2 / OWASP API5:2023). Previously
+     * anyone with the orderId in the URL could view any ticket — leaking
+     * the buyer's email, attendee name, AND the ticket QR code (used for
+     * event entry). Now requires proof of ownership via auth OR a signed
+     * token (same pattern as CourseController).
      */
     public function ticket(Request $request, string $username, string $productId, string $orderId)
     {
@@ -29,6 +35,24 @@ class EventController extends Controller
             ->where('product_id', $productId)
             ->where('payment_status', 'paid')
             ->firstOrFail();
+
+        // Authorization: buyer must be authenticated as the order owner, OR
+        // present a signed access token (guest checkout path).
+        $user = Auth::user();
+        $ownsOrder = $user && (
+            $order->buyer_user_id === $user->id
+            || strtolower((string) $order->buyer_email) === strtolower((string) $user->email)
+        );
+        $hasValidToken = CourseController::verifyAccessToken(
+            $request->query('token'),
+            $order->id,
+            (string) $order->buyer_email,
+            $product->id
+        );
+
+        if (! $ownsOrder && ! $hasValidToken) {
+            abort(403, 'Akses ditolak — beli tiket atau login sebagai pemilik.');
+        }
 
         $ticket = EventTicket::where('order_id', $orderId)->first();
         if (! $ticket) {
