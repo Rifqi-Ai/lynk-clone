@@ -4,20 +4,51 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 class DashboardController extends Controller
 {
+    /** How many days of revenue/sales data to show on the dashboard. */
+    private const CHART_DAYS = 30;
+
+    /** Number of top products to show in the leaderboard. */
+    private const TOP_PRODUCTS_LIMIT = 5;
+
+    /** Number of recent products/orders to show in the sidebar. */
+    private const RECENT_ITEMS_LIMIT = 5;
+
+    /** Storage disk for user-uploaded files. */
+    private const FILE_DISK = 'public';
+
     /**
-     * Dashboard overview: stats + recent products + recent orders.
+     * Dashboard overview: stats + recent products + recent orders + charts.
      */
     public function index(Request $request)
     {
         $user = $request->user();
 
-        // PERF: Single aggregated query for stats (was 5 separate count/sum queries)
+        $stats = $this->buildStats($user);
+        $revenueChart = $this->buildDailyRevenueChart($user);
+        $salesChart = $this->buildDailySalesChart($user);
+        $topProducts = $this->getTopProducts($user);
+        $salesByType = $this->getSalesByType($user);
+        ['products' => $recentProducts, 'orders' => $recentOrders] = $this->getRecentItems($user);
+
+        return view('dashboard.index', compact(
+            'stats', 'recentProducts', 'recentOrders',
+            'revenueChart', 'salesChart', 'topProducts', 'salesByType',
+        ));
+    }
+
+    /**
+     * Build the headline stats card (single pass per resource).
+     */
+    private function buildStats(User $user): array
+    {
         $productStats = $user->products()
             ->selectRaw("
                 COUNT(*) as total,
@@ -34,7 +65,7 @@ class DashboardController extends Controller
             ")
             ->first();
 
-        $stats = [
+        return [
             'total_products' => (int) ($productStats->total ?? 0),
             'published_products' => (int) ($productStats->published ?? 0),
             'total_sales' => (int) ($orderStats->paid_count ?? 0),
@@ -42,18 +73,36 @@ class DashboardController extends Controller
             'pending_orders' => (int) ($orderStats->pending_count ?? 0),
             'profile_views' => (int) ($productStats->total_views ?? 0),
         ];
+    }
 
-        // Last 30 days revenue chart (per day) — single query
-        $startDate = now()->subDays(29)->startOfDay();
-        $dailyRevenue = $user->ordersAsCreator()
+    /**
+     * Build a 30-day revenue chart, filling missing days with 0.
+     */
+    private function buildDailyRevenueChart(User $user): array
+    {
+        $startDate = now()->subDays(self::CHART_DAYS - 1)->startOfDay();
+        $daily = $user->ordersAsCreator()
             ->where('payment_status', 'paid')
             ->where('paid_at', '>=', $startDate)
-            ->selectRaw('DATE(paid_at) as date, SUM(creator_payout) as amount, COUNT(*) as count')
+            ->selectRaw('DATE(paid_at) as date, SUM(creator_payout) as amount')
             ->groupBy('date')
             ->pluck('amount', 'date')
             ->toArray();
 
-        $dailySales = $user->ordersAsCreator()
+        return $this->fillMissingDays($daily, fn ($amount) => [
+            'date' => $amount['date'],
+            'label' => $amount['label'],
+            'amount' => (float) $amount['value'],
+        ]);
+    }
+
+    /**
+     * Build a 30-day sales count chart, filling missing days with 0.
+     */
+    private function buildDailySalesChart(User $user): array
+    {
+        $startDate = now()->subDays(self::CHART_DAYS - 1)->startOfDay();
+        $daily = $user->ordersAsCreator()
             ->where('payment_status', 'paid')
             ->where('paid_at', '>=', $startDate)
             ->selectRaw('DATE(paid_at) as date, COUNT(*) as count')
@@ -61,52 +110,79 @@ class DashboardController extends Controller
             ->pluck('count', 'date')
             ->toArray();
 
-        $revenueChart = [];
-        $salesChart = [];
-        for ($i = 29; $i >= 0; $i--) {
-            $date = now()->subDays($i)->format('Y-m-d');
-            $revenueChart[] = [
+        return $this->fillMissingDays($daily, fn ($day) => [
+            'date' => $day['date'],
+            'label' => $day['label'],
+            'count' => (int) $day['value'],
+        ]);
+    }
+
+    /**
+     * Fill in zeros for days that have no data, ensuring the chart
+     * always has CHART_DAYS entries. $map transforms each day into the
+     * shape the chart expects.
+     */
+    private function fillMissingDays(array $daily, callable $map): array
+    {
+        $result = [];
+        for ($i = self::CHART_DAYS - 1; $i >= 0; $i--) {
+            $carbon = now()->subDays($i);
+            $date = $carbon->format('Y-m-d');
+            $result[] = $map([
                 'date' => $date,
-                'label' => now()->subDays($i)->format('d M'),
-                'amount' => (float) ($dailyRevenue[$date] ?? 0),
-            ];
-            $salesChart[] = [
-                'date' => $date,
-                'label' => now()->subDays($i)->format('d M'),
-                'count' => (int) ($dailySales[$date] ?? 0),
-            ];
+                'label' => $carbon->format('d M'),
+                'value' => $daily[$date] ?? 0,
+            ]);
         }
 
-        // PERF: Top 5 products — eager-load paidOrders sums via subquery (no N+1)
-        $topProducts = $user->products()
+        return $result;
+    }
+
+    /**
+     * Get the top N products ranked by paid-order revenue (single JOIN query).
+     */
+    private function getTopProducts(User $user)
+    {
+        return $user->products()
             ->withSum(['paidOrders' => fn ($q) => $q->where('payment_status', 'paid')], 'creator_payout')
             ->orderByDesc('paid_orders_sum_creator_payout')
-            ->limit(5)
+            ->limit(self::TOP_PRODUCTS_LIMIT)
             ->get();
+    }
 
-        // PERF: Sales by product type — single JOIN query (was per-type query loop)
-        $salesByType = Order::where('creator_user_id', $user->id)
+    /**
+     * Group paid sales by product type with label/icon metadata.
+     */
+    private function getSalesByType(User $user)
+    {
+        return Order::where('creator_user_id', $user->id)
             ->where('payment_status', 'paid')
             ->join('products', 'orders.product_id', '=', 'products.id')
             ->selectRaw('products.type, COUNT(*) as count, SUM(orders.creator_payout) as revenue')
             ->groupBy('products.type')
             ->get()
-            ->map(fn ($r) => [
-                'type' => $r->type,
-                'count' => (int) $r->count,
-                'revenue' => (float) $r->revenue,
-                'label' => Product::TYPES[$r->type]['label'] ?? ucfirst($r->type),
-                'icon' => Product::TYPES[$r->type]['icon'] ?? '📦',
+            ->map(fn ($row) => [
+                'type' => $row->type,
+                'count' => (int) $row->count,
+                'revenue' => (float) $row->revenue,
+                'label' => Product::TYPES[$row->type]['label'] ?? ucfirst($row->type),
+                'icon' => Product::TYPES[$row->type]['icon'] ?? '📦',
             ]);
+    }
 
-        // PERF: Eager-load product + buyer for recent orders to avoid N+1 in view
-        $recentProducts = $user->products()->latest()->limit(5)->get();
-        $recentOrders = $user->ordersAsCreator()->with(['product', 'buyer'])->latest()->limit(5)->get();
-
-        return view('dashboard.index', compact(
-            'stats', 'recentProducts', 'recentOrders',
-            'revenueChart', 'salesChart', 'topProducts', 'salesByType',
-        ));
+    /**
+     * Get recent products and orders (eager-loads product+buyer to avoid N+1).
+     */
+    private function getRecentItems(User $user): array
+    {
+        return [
+            'products' => $user->products()->latest()->limit(self::RECENT_ITEMS_LIMIT)->get(),
+            'orders' => $user->ordersAsCreator()
+                ->with(['product', 'buyer'])
+                ->latest()
+                ->limit(self::RECENT_ITEMS_LIMIT)
+                ->get(),
+        ];
     }
 
     /**
@@ -114,19 +190,43 @@ class DashboardController extends Controller
      */
     public function editProfile(Request $request)
     {
-        $user = $request->user();
-
-        return view('dashboard.profile', compact('user'));
+        return view('dashboard.profile', [
+            'user' => $request->user(),
+        ]);
     }
 
     /**
-     * Update profile.
+     * Update profile (name, bio, phone, avatar, social links).
      */
     public function updateProfile(Request $request): RedirectResponse
     {
         $user = $request->user();
 
-        $data = $request->validate([
+        $data = $this->validateProfile($request);
+
+        if (! empty($data['phone'])) {
+            $data['phone'] = $this->normalizePhoneNumber($data['phone']);
+        }
+
+        $data['whatsapp_opt_in'] = $request->boolean('whatsapp_opt_in');
+
+        if ($request->hasFile('avatar')) {
+            $data['avatar_path'] = $this->storeAvatar($request->file('avatar'), $user);
+        }
+        unset($data['avatar']);
+
+        $user->update($data);
+
+        return redirect()->route('settings.profile')
+            ->with('success', 'Profile updated successfully.');
+    }
+
+    /**
+     * Validation rules for the profile update form.
+     */
+    private function validateProfile(Request $request): array
+    {
+        return $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'title' => ['nullable', 'string', 'max:100'],
             'bio' => ['nullable', 'string', 'max:1000'],
@@ -137,29 +237,33 @@ class DashboardController extends Controller
             'social_links.*.platform' => ['required', 'string', 'in:instagram,tiktok,twitter,youtube,facebook,linkedin,website'],
             'social_links.*.url' => ['required', 'url'],
         ]);
+    }
 
-        // Normalize phone number
-        if (! empty($data['phone'])) {
-            $phone = preg_replace('/[^0-9]/', '', $data['phone']);
-            if (str_starts_with($phone, '0')) {
-                $phone = '62'.substr($phone, 1);
-            }
-            $data['phone'] = $phone;
+    /**
+     * Normalize a user-entered phone number to international format
+     * (62xxxxxxxxx for Indonesia). Strips non-digits, then replaces a
+     * leading 0 with the 62 country code.
+     */
+    private function normalizePhoneNumber(string $phone): string
+    {
+        $digits = preg_replace('/[^0-9]/', '', $phone);
+
+        if (str_starts_with($digits, '0')) {
+            return '62'.substr($digits, 1);
         }
 
-        $data['whatsapp_opt_in'] = $request->boolean('whatsapp_opt_in');
+        return $digits;
+    }
 
-        if ($request->hasFile('avatar')) {
-            if ($user->avatar_path) {
-                Storage::disk('public')->delete($user->avatar_path);
-            }
-            $data['avatar_path'] = $request->file('avatar')->store("avatars/{$user->id}", 'public');
+    /**
+     * Store a new avatar and delete the old one. Returns the new path.
+     */
+    private function storeAvatar(UploadedFile $file, User $user): string
+    {
+        if ($user->avatar_path) {
+            Storage::disk(self::FILE_DISK)->delete($user->avatar_path);
         }
-        unset($data['avatar']);
 
-        $user->update($data);
-
-        return redirect()->route('settings.profile')
-            ->with('success', 'Profile updated successfully.');
+        return $file->store("avatars/{$user->id}", self::FILE_DISK);
     }
 }
