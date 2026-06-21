@@ -68,6 +68,20 @@
                     <a href="{{ route('about') }}" class="hover:text-brand-600 transition-colors">About</a>
                 </div>
 
+                {{-- Search (desktop) --}}
+                <form action="{{ route('search') }}" method="GET" class="hidden lg:flex items-center max-w-xs flex-1 mx-4">
+                    <label for="nav-search" class="sr-only">Cari kreator atau produk</label>
+                    <div class="relative w-full">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-ink-400" aria-hidden="true">
+                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg>
+                        </div>
+                        <input id="nav-search" name="q" type="search" autocomplete="off"
+                               placeholder="Cari kreator, produk…"
+                               class="w-full h-10 pl-9 pr-3 bg-ink-50 border border-transparent rounded-xl text-sm text-ink-900 placeholder:text-ink-400 focus:bg-white focus:border-brand-400 focus:ring-2 focus:ring-brand-200 transition-all"
+                               aria-label="Cari kreator atau produk">
+                    </div>
+                </form>
+
                 {{-- Right actions --}}
                 <div class="flex items-center gap-2">
                     @auth

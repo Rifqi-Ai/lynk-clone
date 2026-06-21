@@ -10,11 +10,13 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PublicProfileController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SeoController;
 use Illuminate\Support\Facades\Route;
 
 // ───── Landing / Marketing ─────
 Route::get('/', [LandingController::class, 'index'])->name('home');
+Route::get('/search', [SearchController::class, 'index'])->name('search');
 Route::view('/pricing', 'pages.pricing')->name('pricing');
 Route::view('/faq', 'pages.faq')->name('faq');
 
